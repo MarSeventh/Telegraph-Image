@@ -77,7 +77,7 @@ export async function onRequestPost(context) {  // Contents of context object
         headers: headers,
         body: clonedRequest.body,
     });
-   
+    let jsonResponse = await response.json();
     
     return response;
 }
