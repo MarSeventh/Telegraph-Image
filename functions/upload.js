@@ -83,16 +83,6 @@ export async function onRequestPost(context) {  // Contents of context object
         // 进行图片审查后，将图片地址存入 KV
         let time  = new Date().getTime();
         let apikey = env.ModerateContentApiKey;
-        if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {} else {
-            if (typeof apikey == "undefined" || apikey == null || apikey == "") {
-                //add image to kv
-                await env.img_url.put(id, "", {
-                    metadata: { ListType: "None", Label: "None", TimeStamp: time },
-                });
-            } else {
-                
-            }
-        }
     }
     return response;
 }
