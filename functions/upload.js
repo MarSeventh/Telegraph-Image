@@ -77,7 +77,28 @@ export async function onRequestPost(context) {  // Contents of context object
         headers: headers,
         body: clonedRequest.body,
     });
-    let jsonResponse = await response.json();
-    
+    const clonedRes = response.clone().json();
+    if (clonedRes.ok && clonedRes.data && clonedRes.data[0] && clonedRes.data[0].src) {
+        const src = clonedRes.data[0].src;
+        const id = src.split('/').pop();
+        const img_url = env.img_url;
+        const apikey = env.ModerateContentApiKey;
+        if (img_url == undefined || img_url == null || img_url == "") {
+        } else {
+            if (apikey == undefined || apikey == null || apikey == "") {
+                await env.img_url.put(id, "", {
+                    metadata: { ListType: "None", Label: "None", TimeStamp: time },
+                });
+            } else {
+                await fetch(`https://api.moderatecontent.com/moderate/?key=` + apikey + `&url=https://telegra.ph/` + src).
+                then(async (response) => {
+                    let moderate_data = await response.json();
+                    await env.img_url.put(id, "", {
+                         metadata: { ListType: "None", Label: moderate_data.rating_label, TimeStamp: time },
+                    });
+                });
+            }
+        }
+    }
     return response;
 }
