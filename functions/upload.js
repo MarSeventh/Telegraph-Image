@@ -77,12 +77,14 @@ export async function onRequestPost(context) {  // Contents of context object
         headers: headers,
         body: clonedRequest.body,
     });
-    if (response.status == 200 && response.data[0] && response.data[0].src) {
-        const src = response.data[0].src;
+    const jsonResponse = await response.json();
+    if (response.ok && jsonResponse.data && jsonResponse.data[0] && jsonResponse.data[0].src) {
+        const src = jsonResponse.data[0].src;
         const id = src.split('/').pop();
         // 进行图片审查后，将图片地址存入 KV
         let time  = new Date().getTime();
         let apikey = env.ModerateContentApiKey;
+        
     }
     return response;
 }
