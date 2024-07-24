@@ -90,14 +90,7 @@ export async function onRequestPost(context) {  // Contents of context object
                     metadata: { ListType: "None", Label: "None", TimeStamp: time },
                 });
             } else {
-                await fetch(`https://api.moderatecontent.com/moderate/?key=` + apikey + `&url=https://telegra.ph` + src).
-                then(async (response) => {
-                    let moderate_data = await response.json();
-                    //add image to kv
-                    await env.img_url.put(id, "", {
-                        metadata: { ListType: "None", Label: moderate_data.rating_label, TimeStamp: time },
-                    });
-                });
+                
             }
         }
     }
