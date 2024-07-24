@@ -72,17 +72,18 @@ export async function onRequestPost(context) {  // Contents of context object
     // 复制请求头并剔除 authCode
     const headers = new Headers(clonedRequest.headers);
     headers.delete('authCode');
-    const response = await fetch(targetUrl.href, {
+    await fetch(targetUrl.href, {
         method: clonedRequest.method,
         headers: headers,
         body: clonedRequest.body,
-    });
-    const clonedRes = response.clone().json();
-    if (clonedRes.ok && clonedRes.data && clonedRes.data[0] && clonedRes.data[0].src) {
-        const src = clonedRes.data[0].src;
+    }).then(async (res) => {
+        const time = new Date().getTime();
+        const src = res[0].src;
+        console.log("src: " + src);
         const id = src.split('/').pop();
         const img_url = env.img_url;
         const apikey = env.ModerateContentApiKey;
+        console.log("id: " + id);
         if (img_url == undefined || img_url == null || img_url == "") {
         } else {
             if (apikey == undefined || apikey == null || apikey == "") {
@@ -94,11 +95,12 @@ export async function onRequestPost(context) {  // Contents of context object
                 then(async (response) => {
                     let moderate_data = await response.json();
                     await env.img_url.put(id, "", {
-                         metadata: { ListType: "None", Label: moderate_data.rating_label, TimeStamp: time },
+                        metadata: { ListType: "None", Label: moderate_data.rating_label, TimeStamp: time },
                     });
                 });
             }
         }
-    }
-    return response;
+    }).finally ((response) => {
+        return response;
+    });
 }
