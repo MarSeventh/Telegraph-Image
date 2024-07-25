@@ -17,7 +17,7 @@ export async function onRequest(context) {
     } else {
         const randomIndex = Math.floor(Math.random() * list.keys.length);
         const randomKey = list.keys[randomIndex];
-        const randomUrl = '/flie/' + randomKey.name;
+        const randomUrl = '/file/' + randomKey.name;
         return new Response(JSON.stringify({ url: randomUrl }), { status: 200 });
     }
 }
