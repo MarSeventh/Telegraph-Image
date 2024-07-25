@@ -1,5 +1,0 @@
-name = "cloudflare-imgbed"
-compatibility_date = "2024-07-24"
-
-[vars]
-ModerateContentApiKey = "7600d6178e81e867bb9eccbbaffad463"

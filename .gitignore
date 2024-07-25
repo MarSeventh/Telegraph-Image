@@ -4,4 +4,3 @@ node_modules/.mf/*
 data/*
 node_modules
 wrangler.toml
-.env
