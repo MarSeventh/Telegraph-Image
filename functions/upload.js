@@ -88,20 +88,25 @@ export async function onRequestPost(context) {  // Contents of context object
             if (img_url == undefined || img_url == null || img_url == "") {
             } else {
                 if (apikey == undefined || apikey == null || apikey == "") {
+                    console.log("ModerateContentApiKey is not defined");
                     await env.img_url.put(id, "", {
-                        metadata: { ListType: "None", Label: "None", TimeStamp: time },
+                        metadata: { ListType: "None", Label: "Test1", TimeStamp: time },
                     });
                 } else {
                     await fetch(`https://api.moderatecontent.com/moderate/?key=` + apikey + `&url=https://telegra.ph/` + src).
                     then(async (response) => {
                         let moderate_data = await response.json();
+                        console.log('good');
                         await env.img_url.put(id, "", {
-                            metadata: { ListType: "None", Label: moderate_data.rating_label, TimeStamp: time },
+                            metadata: { ListType: "None", Label: "Test2", TimeStamp: time },
                         });
                     });
                 }
             }
         });
+    }
+    catch (e) {
+        console.error('Error:', e);
     }
     finally {
         return response;
