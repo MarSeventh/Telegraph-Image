@@ -95,11 +95,9 @@ export async function onRequestPost(context) {  // Contents of context object
             } else {
                 try {
                     const fetchResponse = await fetch(`https://api.moderatecontent.com/moderate/?key=${apikey}&url=https://telegra.ph/${src}`);
-    
                     if (!fetchResponse.ok) {
                         throw new Error(`HTTP error! status: ${fetchResponse.status}`);
                     }
-    
                     const moderate_data = await fetchResponse.json();
                     await env.img_url.put(id, "", {
                         metadata: { ListType: "None", Label: moderate_data.rating_label, TimeStamp: time },
