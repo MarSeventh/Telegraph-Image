@@ -30,6 +30,10 @@ function getCookieValue(cookies, name) {
 
 export async function onRequestPost(context) {  // Contents of context object
     const { request, env, params, waitUntil, next, data } = context;
+
+    await errorHandling(context);
+    telemetryData(context);
+
     const url = new URL(request.url);
     const clonedRequest = await request.clone();
 
@@ -79,8 +83,6 @@ export async function onRequestPost(context) {  // Contents of context object
         return new UnauthorizedException("error");
     }
 
-    // await errorHandling(context);
-    // telemetryData(context);
     // 构建目标 URL 时剔除 authCode 参数
     // const targetUrl = new URL(url.pathname, 'https://telegra.ph'); // telegraph接口，已失效，缅怀
     const targetUrl = new URL(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/${sendFunction.url}`); // telegram接口
@@ -141,7 +143,7 @@ export async function onRequestPost(context) {  // Contents of context object
                     }
                     const moderate_data = await fetchResponse.json();
                     await env.img_url.put(id, "", {
-                        metadata: { fileName: fileName, fileType: fileType, ListType: "None", Label: moderate_data.rating_label, TimeStamp: time, Channel: "Telegram", TgFilePath: filePath },
+                        metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: moderate_data.rating_label, TimeStamp: time, Channel: "Telegram", TgFilePath: filePath },
                     });
                 } catch (error) {
                     console.error('Moderate Error:', error);

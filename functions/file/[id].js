@@ -35,8 +35,9 @@ export async function onRequest(context) {  // Contents of context object
     } else {
         targetUrl = 'https://telegra.ph/' + url.pathname + url.search;
     }
-    const fileName = imgRecord.metadata?.fileName || 'file';
-    const fileType = imgRecord.metadata?.fileType || 'image/jpeg';
+    const fileName = imgRecord.metadata?.FileName || 'file';
+    const encodedFileName = encodeURIComponent(fileName);
+    const fileType = imgRecord.metadata?.FileType || 'image/jpeg';
 
     const response = await fetch(targetUrl, {
         method: request.method,
@@ -127,7 +128,7 @@ export async function onRequest(context) {  // Contents of context object
     });
 
     const headers = new Headers(response.headers);
-    headers.set('Content-Disposition', `inline; filename="${fileName}"`);
+    headers.set('Content-Disposition', `inline; filename="${encodedFileName}"`);
     headers.set('Content-Type', fileType);
     return new Response(response.body, {
         status: response.status,
