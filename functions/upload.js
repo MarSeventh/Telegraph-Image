@@ -31,8 +31,8 @@ function getCookieValue(cookies, name) {
 export async function onRequestPost(context) {  // Contents of context object
     const { request, env, params, waitUntil, next, data } = context;
 
-    await errorHandling(context);
-    telemetryData(context);
+    // await errorHandling(context);
+    // telemetryData(context);
 
     const url = new URL(request.url);
     const clonedRequest = await request.clone();
