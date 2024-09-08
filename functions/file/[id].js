@@ -41,61 +41,63 @@ export async function onRequest(context) {  // Contents of context object
     const fileType = imgRecord.metadata?.FileType || 'image/jpeg';
 
     const response = await getFileContent(request, imgRecord, params.id, env, url);
+    
+    try {
+        const headers = new Headers(response.headers);
+        headers.set('Content-Disposition', `inline; filename="${encodedFileName}"`);
+        headers.set('Content-Type', fileType);
+        const newRes =  new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+        });
 
-    const headers = new Headers(response.headers);
-    headers.set('Content-Disposition', `inline; filename="${encodedFileName}"`);
-    headers.set('Content-Type', fileType);
-    const newRes =  new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-    });
-
-    if (response.ok) {
-        // Referer header equal to the admin page
-        if (request.headers.get('Referer') == url.origin + "/admin") {
-            //show the image
-            return newRes;
-        }
-
-        if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") { } else {
-            //check the record from kv
-            const record = await env.img_url.getWithMetadata(params.id);
-            if (record.metadata === null) {
-            } else {
-                //if the record is not null, redirect to the image
-                if (record.metadata.ListType == "White") {
-                    return newRes;
-                } else if (record.metadata.ListType == "Block") {
-                    console.log("Referer")
-                    console.log(request.headers.get('Referer'))
-                    if (typeof request.headers.get('Referer') == "undefined" || request.headers.get('Referer') == null || request.headers.get('Referer') == "") {
-                        return Response.redirect(url.origin + "/block-img.html", 302)
-                    } else {
-                        return Response.redirect("https://static-res.pages.dev/teleimage/img-block-compressed.png", 302)
-                    }
-
-                } else if (record.metadata.Label == "adult") {
-                    if (typeof request.headers.get('Referer') == "undefined" || request.headers.get('Referer') == null || request.headers.get('Referer') == "") {
-                        return Response.redirect(url.origin + "/block-img.html", 302)
-                    } else {
-                        return Response.redirect("https://static-res.pages.dev/teleimage/img-block-compressed.png", 302)
-                    }
-                }
-                //check if the env variables WhiteList_Mode are set
-                console.log("env.WhiteList_Mode:", env.WhiteList_Mode)
-                if (env.WhiteList_Mode == "true") {
-                    //if the env variables WhiteList_Mode are set, redirect to the image
-                    return Response.redirect(url.origin + "/whitelist-on.html", 302);
-                } else {
-                    //if the env variables WhiteList_Mode are not set, redirect to the image
-                    return newRes;
-                }
+        if (response.ok) {
+            // Referer header equal to the admin page
+            if (request.headers.get('Referer') == url.origin + "/admin") {
+                //show the image
+                return newRes;
             }
 
+            if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") { } else {
+                //check the record from kv
+                const record = await env.img_url.getWithMetadata(params.id);
+                if (record.metadata === null) {
+                } else {
+                    //if the record is not null, redirect to the image
+                    if (record.metadata.ListType == "White") {
+                        return newRes;
+                    } else if (record.metadata.ListType == "Block") {
+                        console.log("Referer")
+                        console.log(request.headers.get('Referer'))
+                        if (typeof request.headers.get('Referer') == "undefined" || request.headers.get('Referer') == null || request.headers.get('Referer') == "") {
+                            return Response.redirect(url.origin + "/block-img.html", 302)
+                        } else {
+                            return Response.redirect("https://static-res.pages.dev/teleimage/img-block-compressed.png", 302)
+                        }
+
+                    } else if (record.metadata.Label == "adult") {
+                        if (typeof request.headers.get('Referer') == "undefined" || request.headers.get('Referer') == null || request.headers.get('Referer') == "") {
+                            return Response.redirect(url.origin + "/block-img.html", 302)
+                        } else {
+                            return Response.redirect("https://static-res.pages.dev/teleimage/img-block-compressed.png", 302)
+                        }
+                    }
+                    //check if the env variables WhiteList_Mode are set
+                    if (env.WhiteList_Mode == "true") {
+                        //if the env variables WhiteList_Mode are set, redirect to the image
+                        return Response.redirect(url.origin + "/whitelist-on.html", 302);
+                    } else {
+                        //if the env variables WhiteList_Mode are not set, redirect to the image
+                        return newRes;
+                    }
+                }
+            }
         }
+        return newRes;
+    } catch (error) {
+        return new Response('Error: ' + error, { status: 500 });
     }
-    return newRes;
 }
 
 async function getFileContent(request, imgRecord, file_id, env, url, max_retries = 2) {
