@@ -356,7 +356,18 @@
             type: 'warning'
           }).then(() => {
             fetch(`./api/manage/delete/${key}`, { method: 'GET', credentials: 'include' })
-              .then(response => response.ok ? this.tableData.splice(index, 1) : Promise.reject())
+              .then(response => {
+                if (response.ok) {
+                  const fileIndex = this.tableData.findIndex(file => file.name === key);
+                  if (fileIndex !== -1) {
+                    this.tableData.splice(fileIndex, 1);
+                  }
+                  this.updateStats();
+                  this.$message.success('删除成功!');
+                } else {
+                  this.$message.error('删除失败，请检查网络连接');
+                }
+              })
               .then(() => {
                 this.updateStats();
                 this.$message.success('删除成功!');
