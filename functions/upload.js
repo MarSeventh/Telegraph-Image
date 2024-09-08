@@ -46,7 +46,7 @@ export async function onRequestPost(context) {  // Contents of context object
         fileExt = fileType.split('/').pop();
         if (!isExtValid(fileExt)) {
             // Type中无法获取扩展名
-            fileExt = 'jpeg' // 默认扩展名
+            fileExt = 'unknown' // 默认扩展名
         }
     }
 
@@ -225,5 +225,8 @@ async function getFilePath(env, file_id) {
 }
 
 function isExtValid(fileExt) {
-    return ['jpeg', 'jpg', 'png', 'gif', 'webp', 'mp4', 'mp3', 'ogg', 'pdf'].includes(fileExt);
+    return ['jpeg', 'jpg', 'png', 'gif', 'webp', 
+    'mp4', 'mp3', 'ogg',
+    'mp3', 'wav', 'flac', 'aac', 'opus',
+    'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf'].includes(fileExt);
 }
