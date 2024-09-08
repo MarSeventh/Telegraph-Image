@@ -109,7 +109,7 @@ async function getFileContent(request, imgRecord, file_id, env, url, max_retries
                 headers: request.headers,
                 body: request.body,
             });
-            if (response.ok) {
+            if (response.ok || response.status === 304) {
                 return response;
             } else {
                 // 若为TG渠道，更新TgFilePath
