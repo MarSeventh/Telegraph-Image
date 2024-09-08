@@ -227,6 +227,12 @@
       transform: scale(1.5);
       z-index: 10;
     }
+
+    .video-preview {
+      width: 100%; 
+      height: auto;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -276,9 +282,10 @@
               <!-- 如果文件类型是视频，使用 <video> 标签显示视频预览 -->
               <video v-if="item.metadata?.FileType?.includes('video')" 
                 :src="'/file/' + item.name" 
-                controls
-                width="100%" 
-                height="auto">
+                autoplay 
+                muted
+                loop
+                class="video-preview">
                 你的浏览器不支持视频播放
               </video>
               <!-- 如果文件类型不是视频，显示图片预览 -->
