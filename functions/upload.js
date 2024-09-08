@@ -46,7 +46,7 @@ export async function onRequestPost(context) {  // Contents of context object
         fileExt = fileType.split('/').pop();
         if (fileExt === fileType) {
             // Type中无法获取扩展名
-            fileType = 'jpeg' // 默认扩展名
+            fileExt = 'jpeg' // 默认扩展名
         }
     }
 
