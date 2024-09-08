@@ -134,6 +134,7 @@ export async function onRequestPost(context) {  // Contents of context object
         // const src = clonedRes[0].src;
         // const id = src.split('/').pop();
         const id = fileInfo.file_id;
+        const fullId = id + '.' + fileExt;
         const img_url = env.img_url;
         const apikey = env.ModerateContentApiKey;
     
@@ -141,7 +142,7 @@ export async function onRequestPost(context) {  // Contents of context object
             // img_url 未定义或为空的处理逻辑
         } else {
             if (apikey == undefined || apikey == null || apikey == "") {
-                await env.img_url.put(id, "", {
+                await env.img_url.put(fullId, "", {
                     metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: "None", TimeStamp: time, Channel: "Telegram", TgFilePath: filePath },
                 });
             } else {
@@ -151,7 +152,7 @@ export async function onRequestPost(context) {  // Contents of context object
                         throw new Error(`HTTP error! status: ${fetchResponse.status}`);
                     }
                     const moderate_data = await fetchResponse.json();
-                    await env.img_url.put(id, "", {
+                    await env.img_url.put(fullId, "", {
                         metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: moderate_data.rating_label, TimeStamp: time, Channel: "Telegram", TgFilePath: filePath },
                     });
                 } catch (error) {
