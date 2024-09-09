@@ -140,6 +140,7 @@ export async function onRequestPost(context) {  // Contents of context object
     
         if (img_url == undefined || img_url == null || img_url == "") {
             // img_url 未定义或为空的处理逻辑
+            return new Response('Error: Please configure KV database', { status: 500 });
         } else {
             if (apikey == undefined || apikey == null || apikey == "") {
                 await env.img_url.put(fullId, "", {
