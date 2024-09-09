@@ -466,8 +466,8 @@
               this.showLogoutButton=true;
               // 在 check 成功后再执行 list 的 fetch 请求
               return fetch("./api/manage/list", { method: 'GET', credentials: 'include' });
-            }else if(result=="Not using basic auth."){
-              
+            } else if(result=="Not using basic auth."){
+              return fetch("./api/manage/list", { method: 'GET', credentials: 'include' });
             }
             else{
               window.location.href="./api/manage/login";
