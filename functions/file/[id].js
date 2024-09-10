@@ -42,11 +42,7 @@ export async function onRequest(context) {  // Contents of context object
     }
     const fileName = imgRecord.metadata?.FileName || 'file';
     const encodedFileName = encodeURIComponent(fileName);
-    let fileType = imgRecord.metadata?.FileType || 'image/jpeg';
-    // GIF 特殊处理
-    if (fileType === 'image/gif') {
-        fileType = 'image/jpeg';
-    }
+    const fileType = imgRecord.metadata?.FileType || 'image/jpeg';
 
     const response = await getFileContent(request, imgRecord, TgFileID, env, url);
     
