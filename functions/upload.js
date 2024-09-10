@@ -70,7 +70,7 @@ export async function onRequestPost(context) {  // Contents of context object
 
     // GIF 特殊处理
     if (fileType === 'image/gif') {
-        sendFunction = {'url': 'sendAnimation', 'type': 'animation'};
+        sendFunction = {'url': 'sendDocument', 'type': 'document'};
     }
 
     // 优先从请求 URL 获取 authCode
