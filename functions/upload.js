@@ -64,9 +64,14 @@ export async function onRequestPost(context) {  // Contents of context object
 
     const defaultType = {'url': 'sendDocument', 'type': 'document'};
 
-    const sendFunction = Object.keys(fileTypeMap).find(key => fileType.startsWith(key)) 
+    let sendFunction = Object.keys(fileTypeMap).find(key => fileType.startsWith(key)) 
         ? fileTypeMap[Object.keys(fileTypeMap).find(key => fileType.startsWith(key))] 
         : defaultType;
+
+    // GIF 特殊处理
+    if (fileType === 'image/gif') {
+        sendFunction = {'url': 'sendAnimation', 'type': 'animation'};
+    }
 
     // 优先从请求 URL 获取 authCode
     let authCode = url.searchParams.get('authCode');
