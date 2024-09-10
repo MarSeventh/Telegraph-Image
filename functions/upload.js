@@ -69,7 +69,7 @@ export async function onRequestPost(context) {  // Contents of context object
         : defaultType;
 
     // GIF 特殊处理
-    if (fileType === 'image/gif') {
+    if (fileExt === 'gif') {
         sendFunction = {'url': 'sendAnimation', 'type': 'animation'};
     }
 
