@@ -60,6 +60,10 @@ export async function onRequestPost(context) {  // Contents of context object
         const newFileName = fileName.replace(/\.gif$/, '.jpeg');
         const newFile = new File([formdata.get('file')], newFileName, { type: fileType });
         formdata.set('file', newFile);
+    } else if (fileExt === 'webp') {
+        const newFileName = fileName.replace(/\.webp$/, '.jpeg');
+        const newFile = new File([formdata.get('file')], newFileName, { type: fileType });
+        formdata.set('file', newFile);
     }
 
     const fileTypeMap = {
