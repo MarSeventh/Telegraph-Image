@@ -94,6 +94,7 @@ async function errorHandling(context) {
                 headers: {
                 // Prompts the user for credentials.
                 'WWW-Authenticate': 'Basic realm="my scope", charset="UTF-8"',
+                // 'WWW-Authenticate': 'None',
                 },
             });
         }
