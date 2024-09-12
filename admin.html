@@ -470,7 +470,7 @@
               return fetch("./api/manage/list", { method: 'GET', credentials: 'include' });
             }
             else{
-              window.location.href="./api/manage/login";
+              window.location.reload();
               return Promise.reject();
             }
           })
