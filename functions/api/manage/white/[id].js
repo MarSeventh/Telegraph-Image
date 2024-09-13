@@ -14,7 +14,6 @@ export async function onRequest(context) {
     //read the metadata
     const value = await env.img_url.getWithMetadata(params.id);
 
-    //"metadata":{"TimeStamp":19876541,"ListType":"None","rating_label":"None"}
     //change the metadata
     value.metadata.ListType = "White"
     await env.img_url.put(params.id,"",{metadata: value.metadata});
