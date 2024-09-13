@@ -11,6 +11,6 @@ export async function onRequest(context) {
     //get the request url
     const url = new URL(request.url);
     //redirect to admin page
-    return Response.redirect(url.origin+"/admin.html", 302)
+    return Response.redirect(url.origin+"/dashboard", 302)
 
   }
