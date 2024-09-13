@@ -34,8 +34,8 @@ export async function onRequestPost(context) {  // Contents of context object
     const url = new URL(request.url);
     const clonedRequest = await request.clone();
 
-    await errorHandling(context);
-    telemetryData(context);
+    // await errorHandling(context);
+    // telemetryData(context);
 
     if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
         // img_url 未定义或为空的处理逻辑
@@ -142,22 +142,23 @@ export async function onRequestPost(context) {  // Contents of context object
         const clonedRes = await response.clone().json(); // 等待响应克隆和解析完成
         const fileInfo = getFile(clonedRes);
         const filePath = await getFilePath(env, fileInfo.file_id);
-        // 若上传成功，将响应返回给客户端
-        if (response.ok) {
-            res = new Response(
-                JSON.stringify([{ 'src': `/file/${fileInfo.file_id}.${fileExt}` }]), 
-                {
-                    status: 200,
-                    headers: { 'Content-Type': 'application/json' }
-                }
-            );
-        }
+
         const time = new Date().getTime();
         const id = fileInfo.file_id;
         //const fullId = id + '.' + fileExt;
         // 构建独一无二的 ID
         const unique_index = time + Math.floor(Math.random() * 10000);
         const fullId = fileName? unique_index + '_' + fileName : unique_index + '.' + fileExt;
+        // 若上传成功，将响应返回给客户端
+        if (response.ok) {
+            res = new Response(
+                JSON.stringify([{ 'src': `/file/${fullId}` }]), 
+                {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
         const apikey = env.ModerateContentApiKey;
     
         if (apikey == undefined || apikey == null || apikey == "") {

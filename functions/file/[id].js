@@ -39,7 +39,7 @@ export async function onRequest(context) {  // Contents of context object
         return new Response('Error: Image not found', { status: 404 });
     }
 
-    if (imgRecord.metadata?.Channel === 'Telegram') {
+    if (isTgChannel(imgRecord)) {
         targetUrl = `https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${imgRecord.metadata.TgFilePath}`;
     } else {
         targetUrl = 'https://telegra.ph/' + url.pathname + url.search;
@@ -141,7 +141,7 @@ async function getFileContent(request, imgRecord, file_id, store_id, env, url, m
                 return response;
             } else {
                 // 若为TG渠道，更新TgFilePath
-                if (imgRecord.metadata?.Channel === 'Telegram') {
+                if (isTgChannel(imgRecord)) {
                     const filePath = await getFilePath(env, file_id);
                     if (filePath) {
                         imgRecord.metadata.TgFilePath = filePath;
@@ -149,7 +149,7 @@ async function getFileContent(request, imgRecord, file_id, store_id, env, url, m
                             metadata: imgRecord.metadata,
                         });
                         // 更新targetUrl
-                        if (imgRecord.metadata?.Channel === 'Telegram') {
+                        if (isTgChannel(imgRecord)) {
                             targetUrl = `https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${imgRecord.metadata.TgFilePath}`;
                         } else {
                             targetUrl = 'https://telegra.ph/' + url.pathname + url.search;
@@ -185,4 +185,8 @@ async function getFilePath(env, file_id) {
       } catch (error) {
         return null;
       }
+}
+
+function isTgChannel(imgRecord) {
+    return imgRecord.metadata?.Channel === 'Telegram' || imgRecord.metadata?.Channel === 'TelegramNew';
 }
