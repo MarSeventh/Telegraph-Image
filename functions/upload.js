@@ -34,8 +34,8 @@ export async function onRequestPost(context) {  // Contents of context object
     const url = new URL(request.url);
     const clonedRequest = await request.clone();
 
-    // await errorHandling(context);
-    // telemetryData(context);
+    await errorHandling(context);
+    telemetryData(context);
 
     if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
         // img_url 未定义或为空的处理逻辑
