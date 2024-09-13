@@ -154,12 +154,15 @@ export async function onRequestPost(context) {  // Contents of context object
         }
         const time = new Date().getTime();
         const id = fileInfo.file_id;
-        const fullId = id + '.' + fileExt;
+        //const fullId = id + '.' + fileExt;
+        // 构建独一无二的 ID
+        const unique_index = time + Math.floor(Math.random() * 10000);
+        const fullId = fileName? unique_index + '_' + fileName : unique_index + '.' + fileExt;
         const apikey = env.ModerateContentApiKey;
     
         if (apikey == undefined || apikey == null || apikey == "") {
             await env.img_url.put(fullId, "", {
-                metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: "None", TimeStamp: time, Channel: "Telegram", TgFilePath: filePath },
+                metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: "None", TimeStamp: time, Channel: "TelegramNew", TgFilePath: filePath, TgFileId: id },
             });
         } else {
             try {
@@ -169,7 +172,7 @@ export async function onRequestPost(context) {  // Contents of context object
                 }
                 const moderate_data = await fetchResponse.json();
                 await env.img_url.put(fullId, "", {
-                    metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: moderate_data.rating_label, TimeStamp: time, Channel: "Telegram", TgFilePath: filePath },
+                    metadata: { FileName: fileName, FileType: fileType, ListType: "None", Label: moderate_data.rating_label, TimeStamp: time, Channel: "TelegramNew", TgFilePath: filePath, TgFileId: id  },
                 });
             } catch (error) {
                 console.error('Moderate Error:', error);
