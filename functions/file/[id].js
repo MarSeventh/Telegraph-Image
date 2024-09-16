@@ -154,22 +154,6 @@ async function getFileContent(request, max_retries = 2) {
             if (response.ok || response.status === 304) {
                 return response;
             } else {
-                // 若为TG渠道，更新TgFilePath
-                // if (isTgChannel(imgRecord)) {
-                //     const filePath = await getFilePath(env, file_id);
-                //     if (filePath) {
-                //         imgRecord.metadata.TgFilePath = filePath;
-                //         await env.img_url.put(store_id, "", {
-                //             metadata: imgRecord.metadata,
-                //         });
-                //         // 更新targetUrl
-                //         if (isTgChannel(imgRecord)) {
-                //             targetUrl = `https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${imgRecord.metadata.TgFilePath}`;
-                //         } else {
-                //             targetUrl = 'https://telegra.ph/' + url.pathname + url.search;
-                //         }
-                //     }
-                // }
                 retries++;
             }
         } catch (error) {
