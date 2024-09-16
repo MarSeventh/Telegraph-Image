@@ -69,6 +69,9 @@ export async function onRequest(context) {  // Contents of context object
     if (isTgChannel(imgRecord)) {
         // 获取TG图片真实地址
         const filePath = await getFilePath(env, TgFileID);
+        if (filePath === null) {
+            return new Response('Error: Failed to fetch image path', { status: 500 });
+        }
         targetUrl = `https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${filePath}`;
     } else {
         targetUrl = 'https://telegra.ph/' + url.pathname + url.search;
