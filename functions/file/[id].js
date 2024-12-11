@@ -147,8 +147,8 @@ export async function onRequest(context) {  // Contents of context object
 async function returnWithCheck(request, env, url, imgRecord) {
     const response = new Response('good', { status: 200 });
 
-    // Referer header equal to the dashboard page
-    if (request.headers.get('Referer') == url.origin + "/dashboard") {
+    // Referer header equal to the dashboard page or upload page
+    if (request.headers.get('Referer') == url.origin + "/dashboard" || request.headers.get('Referer') == url.origin) {
         //show the image
         return response;
     }
@@ -165,14 +165,14 @@ async function returnWithCheck(request, env, url, imgRecord) {
                 if (typeof request.headers.get('Referer') == "undefined" || request.headers.get('Referer') == null || request.headers.get('Referer') == "") {
                     return Response.redirect(url.origin + "/blockimg", 302)
                 } else {
-                    return new Response('Error: Image Blocked', { status: 404 });
+                    return Response.redirect(url.origin + "/static/BlockImg.png", 302);
                 }
 
             } else if (record.metadata.Label == "adult") {
                 if (typeof request.headers.get('Referer') == "undefined" || request.headers.get('Referer') == null || request.headers.get('Referer') == "") {
                     return Response.redirect(url.origin + "/blockimg", 302)
                 } else {
-                    return new Response('Error: Image Blocked', { status: 404 });
+                    return Response.redirect(url.origin + "/static/BlockImg.png", 302);
                 }
             }
             //check if the env variables WhiteList_Mode are set

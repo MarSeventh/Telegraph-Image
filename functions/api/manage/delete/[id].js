@@ -22,6 +22,14 @@ export async function onRequest(context) {
 
       await env.img_url.delete(params.id);
       const info = JSON.stringify(params.id);
+
+      // 清除CDN缓存
+      const options = {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-Auth-Email': ''},
+        body: `{"files":["${ request.url }"]}`
+      };
+      await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
       
       return new Response(info);
     } catch (e) {
