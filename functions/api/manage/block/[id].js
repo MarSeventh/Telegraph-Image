@@ -10,8 +10,8 @@ export async function onRequest(context) {
     } = context;
     // 组装 CDN URL
     const url = new URL(request.url);
-    const cdnUrl = `https://${url.hostname}/${params.id}`;
-    
+    const cdnUrl = `https://${url.hostname}/file/${params.id}`;
+
     // 解码params.id
     params.id = decodeURIComponent(params.id);
 
