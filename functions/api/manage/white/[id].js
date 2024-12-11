@@ -22,11 +22,11 @@ export async function onRequest(context) {
     // 清除CDN缓存
     const options = {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'X-Auth-Email': ''},
+      headers: {'Content-Type': 'application/json', 'X-Auth-Email': `${env.CF_EMAIL}`, 'X-Auth-Key': `${env.CF_API_KEY}`},
       body: `{"files":["${ request.url }"]}`
     };
     await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
-    
+
     return new Response(info);
 
   }
