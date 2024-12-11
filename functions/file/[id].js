@@ -148,7 +148,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
     const response = new Response('good', { status: 200 });
 
     // Referer header equal to the dashboard page or upload page
-    if (request.headers.get('Referer') == url.origin + "/dashboard" || request.headers.get('Referer') == url.origin) {
+    if (request.headers.get('Referer') == url.origin + "/dashboard" || request.headers.get('Referer') == url.origin + "/") {
         //show the image
         return response;
     }
