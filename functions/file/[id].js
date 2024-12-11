@@ -76,8 +76,8 @@ export async function onRequest(context) {  // Contents of context object
         if (fileType) {
             headers.set('Content-Type', fileType);
         }
-        // 根据Referer设置CDN缓存策略，如果是从/或/dashboard访问，则设置为no-store；否则设置为public，缓存时间为1年
-        if (Referer && (Referer === url.origin + '/' || Referer === url.origin + '/dashboard')) {
+        // 根据Referer设置CDN缓存策略，如果是从/或/dashboard等访问，则设置为no-store；否则设置为public，缓存时间为1年
+        if (Referer && Referer.includes(url.origin)) {
             headers.set('Cache-Control', 'no-store');
         } else {
             headers.set('Cache-Control', 'public, max-age=31536000');
@@ -136,13 +136,13 @@ export async function onRequest(context) {  // Contents of context object
         if (fileType) {
             headers.set('Content-Type', fileType);
         }
-        // 根据Referer设置CDN缓存策略，如果是从/或/dashboard访问，则设置为no-store；否则设置为public，缓存时间为1年
-        if (Referer && (Referer === url.origin + '/' || Referer === url.origin + '/dashboard')) {
+        // 根据Referer设置CDN缓存策略，如果是从/或/dashboard等访问，则设置为no-store；否则设置为public，缓存时间为1年
+        if (Referer && Referer.includes(url.origin)) {
             headers.set('Cache-Control', 'no-store');
         } else {
             headers.set('Cache-Control', 'public, max-age=31536000');
         }
-        
+
         const newRes =  new Response(response.body, {
             status: response.status,
             statusText: response.statusText,
@@ -162,7 +162,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
     const response = new Response('good', { status: 200 });
 
     // Referer header equal to the dashboard page or upload page
-    if (request.headers.get('Referer') == url.origin + "/dashboard" || request.headers.get('Referer') == url.origin + "/") {
+    if (Referer.includes(url.origin)) {
         //show the image
         return response;
     }
