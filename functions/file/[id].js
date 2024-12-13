@@ -126,7 +126,13 @@ export async function onRequest(context) {  // Contents of context object
     if (response === null) {
         return new Response('Error: Failed to fetch image', { status: 500 });
     } else if (response.status === 404) {
-        return Response.redirect(url.origin + "/static/404.png", 302);
+        return new Response(null, {
+            status: 302,
+            headers: {
+                "Location": url.origin + "/static/404.png",
+                "Cache-Control": "public, max-age=31536000"
+            }
+        })
     }
     
     try {
