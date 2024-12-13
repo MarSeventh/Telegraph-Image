@@ -130,7 +130,7 @@ export async function onRequest(context) {  // Contents of context object
             status: 302,
             headers: {
                 "Location": url.origin + "/static/404.png",
-                "Cache-Control": "private, no-store, must-revalidate, s-maxage=31536000"
+                "Cache-Control": "private, must-revalidate, s-maxage=31536000, max-age=0"
             }
         })
     }
@@ -186,7 +186,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
                     status: 302,
                     headers: {
                         "Location": url.origin + "/static/BlockImg.png",
-                        "Cache-Control": "private, no-store, must-revalidate, s-maxage=31536000"
+                        "Cache-Control": "private, must-revalidate, s-maxage=31536000, max-age=0"
                     }
                 })
             } else if (record.metadata.Label == "adult") {
@@ -194,7 +194,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
                     status: 302,
                     headers: {
                         "Location": url.origin + "/static/BlockImg.png",
-                        "Cache-Control": "private, no-store, must-revalidate, s-maxage=31536000"
+                        "Cache-Control": "private, must-revalidate, s-maxage=31536000, max-age=0"
                     }
                 })
             }
@@ -205,7 +205,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
                     status: 302,
                     headers: {
                         "Location": url.origin + "/static/WhiteListOn.png",
-                        "Cache-Control": "private, no-store, must-revalidate, s-maxage=31536000"
+                        "Cache-Control": "private, must-revalidate, s-maxage=31536000, max-age=0"
                     }
                 })
             } else {
