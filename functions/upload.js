@@ -149,13 +149,6 @@ export async function onRequestPost(context) {  // Contents of context object
     // 清除CDN缓存
     const cdnUrl = `https://${url.hostname}/file/${fullId}`;
     await purgeCDNCache(env, cdnUrl, url);
-    // 清除randomFileList API缓存
-    try {
-        const cache = caches.default;
-        await cache.delete(`${url.origin}/api/randomFileList`);    
-    } catch (error) {
-        return new Response(error, { status: 500 });
-    }
    
 
     // ====================================不同渠道上传=======================================
@@ -455,6 +448,19 @@ async function purgeCDNCache(env, cdnUrl, url) {
     };
 
     await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
+
+    // 清除randomFileList API缓存
+    try {
+        const cache = caches.default;
+        // await cache.delete(`${url.origin}/api/randomFileList`);    delete有bug
+        // 通过写入一个max-age=0的response来清除缓存
+        const randomFileListResponse = new Response(null, {
+            headers: { 'Cache-Control': 'max-age=0' },
+        });
+        await cache.put(`${url.origin}/api/randomFileList`, randomFileListResponse);
+    } catch (error) {
+        console.error('Failed to clear cache:', error);
+    }
 }
 
 function isExtValid(fileExt) {
