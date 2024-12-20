@@ -19,6 +19,14 @@ export async function onRequest(context) {
         return new Response('Error: Please configure KV database', { status: 500 });
     }
 
+    // 看缓存中是否有记录，有则直接返回
+    const cache = caches.default;
+    const cacheRes = await cache.match(request);
+    if (cacheRes) {
+        return cacheRes;
+    }
+
+    // 缓存未命中
     let allRecords = [];
     let cursor = null;
 
@@ -54,9 +62,7 @@ export async function onRequest(context) {
         }
     );
 
-    // 存入缓存
-    const cache = caches.default;
+    // 缓存结果
     await cache.put(request, res.clone());
-
     return res;
 }
