@@ -78,7 +78,7 @@ export async function onRequestPost(context) {  // Contents of context object
     if (isBlockedIp) {
         return new Response('Error: Your IP is blocked', { status: 403 });
     }
-    
+
     // 获得上传渠道
     const urlParamUploadChannel = url.searchParams.get('uploadChannel');
     let uploadChannel = 'TelegramNew';
@@ -441,10 +441,12 @@ async function getFilePath(env, file_id) {
 }
 
 async function purgeCDNCache(env, cdnUrl) {
+    // 清除CDN缓存，包括图片和randomFileList接口的缓存
+    const randomFileListUrl = `https://${url.hostname}/api/randomFileList`;
     const options = {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-Auth-Email': `${env.CF_EMAIL}`, 'X-Auth-Key': `${env.CF_API_KEY}`},
-        body: `{"files":["${ cdnUrl }"]}`
+        body: `{"files":["${ cdnUrl }", "${ randomFileListUrl }"]}`
     };
 
     await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
