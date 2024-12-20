@@ -451,7 +451,7 @@ async function purgeCDNCache(env, cdnUrl, url) {
 
     // 清除randomFileList API缓存
     const cache = caches.default;
-    await cache.delete(`${url.origin}/api/randomFileList`);
+    await cache.delete(new Request(`${url.origin}/api/randomFileList`));
 }
 
 function isExtValid(fileExt) {
