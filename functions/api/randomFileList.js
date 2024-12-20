@@ -45,7 +45,7 @@ export async function onRequest(context) {
 
     // 返回所有记录，设置缓存时间为1天
     const info = JSON.stringify(allRecords);
-    return new Response(info,
+    const res = new Response(info,
         {
             headers: {
                 "Content-Type": "application/json",
@@ -53,4 +53,10 @@ export async function onRequest(context) {
             }
         }
     );
+
+    // 存入缓存
+    const cache = caches.default;
+    await cache.put(request, res.clone());
+
+    return res;
 }
