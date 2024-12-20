@@ -34,6 +34,10 @@ export async function onRequest(context) {
         body: `{"files":["${ cdnUrl }"]}`
       };
       await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
+      // 清除randomFileList API缓存
+      const cache = caches.default;
+      const randomFileListRequest = new Request(`${url.origin}/api/randomFileList`);
+      cache.delete(randomFileListRequest);
       
       return new Response(info);
     } catch (e) {

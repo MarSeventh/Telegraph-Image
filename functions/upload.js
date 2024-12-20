@@ -148,7 +148,7 @@ export async function onRequestPost(context) {  // Contents of context object
 
     // 清除CDN缓存
     const cdnUrl = `https://${url.hostname}/file/${fullId}`;
-    await purgeCDNCache(env, cdnUrl);
+    await purgeCDNCache(env, cdnUrl, url);
 
 
     // ====================================不同渠道上传=======================================
@@ -440,7 +440,7 @@ async function getFilePath(env, file_id) {
       }
 }
 
-async function purgeCDNCache(env, cdnUrl) {
+async function purgeCDNCache(env, cdnUrl, url) {
     const options = {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-Auth-Email': `${env.CF_EMAIL}`, 'X-Auth-Key': `${env.CF_API_KEY}`},
@@ -448,6 +448,11 @@ async function purgeCDNCache(env, cdnUrl) {
     };
 
     await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
+
+    // 清除randomFileList API缓存
+    const cache = caches.default;
+    const randomFileListRequest = new Request(`${url.origin}/api/randomFileList`);
+    cache.delete(randomFileListRequest);
 }
 
 function isExtValid(fileExt) {
