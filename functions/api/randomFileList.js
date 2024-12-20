@@ -53,16 +53,11 @@ export async function onRequest(context) {
 
     // 返回所有记录，设置缓存时间为1天
     const info = JSON.stringify(allRecords);
-    const res = new Response(info,
-        {
-            headers: {
-                "Content-Type": "application/json",
-                "Cache-Control": "public, max-age=86400",
-            }
-        }
-    );
+    const res = new Response(info);
 
     // 缓存结果
-    await cache.put(request.url, res.clone());
+    await cache.put(request.url, res.clone(), {
+        expirationTtl: 24 * 60 * 60
+    });
     return res;
 }

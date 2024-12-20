@@ -149,9 +149,6 @@ export async function onRequestPost(context) {  // Contents of context object
     // 清除CDN缓存
     const cdnUrl = `https://${url.hostname}/file/${fullId}`;
     await purgeCDNCache(env, cdnUrl, url);
-    // 清除randomFileList API缓存
-    const cache = caches.default;
-    cache.delete(new Request(`${url.origin}/api/randomFileList`));
 
 
     // ====================================不同渠道上传=======================================
@@ -451,6 +448,10 @@ async function purgeCDNCache(env, cdnUrl, url) {
     };
 
     await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
+
+    // 清除randomFileList API缓存
+    const cache = caches.default;
+    await cache.delete(`${url.origin}/api/randomFileList`);
 }
 
 function isExtValid(fileExt) {
