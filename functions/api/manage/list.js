@@ -8,6 +8,14 @@ export async function onRequest(context) {
       next, // used for middleware or to fetch assets
       data, // arbitrary space for passing data between middlewares
     } = context;
+    // 看缓存中是否有记录，有则直接返回
+    const cache = caches.default;
+    const cacheRes = await cache.match(request.url);
+    if (cacheRes) {
+        return cacheRes;
+    }
+
+    // 缓存未命中
     let allRecords = [];
     let cursor = null;
 
@@ -23,6 +31,15 @@ export async function onRequest(context) {
     } while (cursor);
 
     const info = JSON.stringify(allRecords);
-    return new Response(info);
+    let res = new Response(info, {
+        headers: {
+            "Content-Type": "application/json",
+        }
+    });
 
-  }
+    // 缓存结果，缓存时间为24小时
+    await cache.put(request.url, res.clone(), {
+        expirationTtl: 24 * 60 * 60
+    });
+    return res;
+}

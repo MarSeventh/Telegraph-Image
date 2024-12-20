@@ -51,11 +51,15 @@ export async function onRequest(context) {
         }
     });
 
-    // 返回所有记录，设置缓存时间为1天
+    // 返回所有记录
     const info = JSON.stringify(allRecords);
-    const res = new Response(info);
+    const res = new Response(info,{
+        headers: {
+            "Content-Type": "application/json",
+        }
+    });
 
-    // 缓存结果
+    // 缓存结果，缓存时间为24小时
     await cache.put(request.url, res.clone(), {
         expirationTtl: 24 * 60 * 60
     });
