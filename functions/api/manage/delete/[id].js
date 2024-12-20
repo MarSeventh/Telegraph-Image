@@ -42,6 +42,7 @@ export async function onRequest(context) {
               headers: { 'Cache-Control': 'max-age=0' },
           });
           await cache.put(`${url.origin}/api/randomFileList`, nullResponse);
+          await cache.put(`${url.origin}/api/manage/list`, nullResponse);
       } catch (error) {
           console.error('Failed to clear cache:', error);
       }
