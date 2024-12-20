@@ -21,7 +21,7 @@ export async function onRequest(context) {
 
     // 看缓存中是否有记录，有则直接返回
     const cache = caches.default;
-    const cacheRes = await cache.match(request);
+    const cacheRes = await cache.match(request.url);
     if (cacheRes) {
         return cacheRes;
     }
@@ -63,6 +63,6 @@ export async function onRequest(context) {
     );
 
     // 缓存结果
-    await cache.put(request, res.clone());
+    await cache.put(request.url, res.clone());
     return res;
 }
