@@ -150,9 +150,13 @@ export async function onRequestPost(context) {  // Contents of context object
     const cdnUrl = `https://${url.hostname}/file/${fullId}`;
     await purgeCDNCache(env, cdnUrl, url);
     // 清除randomFileList API缓存
-    const cache = caches.default;
-    await cache.delete(`${url.origin}/api/randomFileList`);
-
+    try {
+        const cache = caches.default;
+        await cache.delete(`${url.origin}/api/randomFileList`);    
+    } catch (error) {
+        return new Response(error, { status: 500 });
+    }
+   
 
     // ====================================不同渠道上传=======================================
     // 出错是否切换渠道自动重试，默认开启
