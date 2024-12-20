@@ -35,9 +35,16 @@ export async function onRequest(context) {
       };
       await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
       // 清除randomFileList API缓存
-      const cache = caches.default;
-      const randomFileListRequest = new Request(`${url.origin}/api/randomFileList`);
-      cache.delete(randomFileListRequest);
+      try {
+          const cache = caches.default;
+          // await cache.delete(`${url.origin}/api/randomFileList`); delete有bug，通过写入一个max-age=0的response来清除缓存
+          const randomFileListResponse = new Response(null, {
+              headers: { 'Cache-Control': 'max-age=0' },
+          });
+          await cache.put(`${url.origin}/api/randomFileList`, randomFileListResponse);
+      } catch (error) {
+          console.error('Failed to clear cache:', error);
+      }
       
       return new Response(info);
     } catch (e) {

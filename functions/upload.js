@@ -452,8 +452,7 @@ async function purgeCDNCache(env, cdnUrl, url) {
     // 清除randomFileList API缓存
     try {
         const cache = caches.default;
-        // await cache.delete(`${url.origin}/api/randomFileList`);    delete有bug
-        // 通过写入一个max-age=0的response来清除缓存
+        // await cache.delete(`${url.origin}/api/randomFileList`); delete有bug，通过写入一个max-age=0的response来清除缓存
         const randomFileListResponse = new Response(null, {
             headers: { 'Cache-Control': 'max-age=0' },
         });
