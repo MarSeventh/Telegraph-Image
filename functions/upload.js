@@ -146,6 +146,15 @@ export async function onRequestPost(context) {  // Contents of context object
         fullId = fileName? unique_index + '_' + fileName : unique_index + '.' + fileExt;
     }
 
+    // 获得返回链接格式, default为返回/file/id, full为返回完整链接
+    const returnFormat = url.searchParams.get('returnFormat') || 'default';
+    let returnLink = '';
+    if (returnFormat === 'full') {
+        returnLink = `${url.origin}/file/${fullId}`;
+    } else {
+        returnLink = `/file/${fullId}`;
+    }
+
     // 清除CDN缓存
     const cdnUrl = `https://${url.hostname}/file/${fullId}`;
     await purgeCDNCache(env, cdnUrl, url);
@@ -237,7 +246,7 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata) {
 
     // 成功上传，将文件ID返回给客户端
     return new Response(
-        JSON.stringify([{ 'src': `/file/${fullId}` }]), 
+        JSON.stringify([{ 'src': `${returnLink}` }]), 
         {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
@@ -323,7 +332,7 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
         // 若上传成功，将响应返回给客户端
         if (response.ok) {
             res = new Response(
-                JSON.stringify([{ 'src': `/file/${fullId}` }]), 
+                JSON.stringify([{ 'src': `${returnLink}` }]),
                 {
                     status: 200,
                     headers: { 'Content-Type': 'application/json' }
