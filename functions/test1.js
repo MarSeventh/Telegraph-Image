@@ -3,7 +3,7 @@ export async function onRequest(context) {
 
     const url = new URL(request.url);
     const cache = caches.default;
-    const cacheKey = `${url.origin}/123`;
+    const cacheKey = `${url.origin}/123.jpg`;
 
     const del = url.searchParams.get('del');
     if (del) {
