@@ -11,7 +11,8 @@ export async function onRequest(context) {
         return new Response('deleted', { status: 200 });
     }
 
-    if (cache.match(cacheKey)) {
+    const cacheResult = await cache.match(cacheKey);
+    if (cacheResult) {
         return new Response('match', { status: 200 });
     } else {
         return new Response('no match', { status: 200 });

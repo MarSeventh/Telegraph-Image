@@ -10,14 +10,15 @@ export async function onRequest(context) {
         await cache.delete(cacheKey);
         return new Response('deleted', { status: 200 });
     }
-
-    if (cache.match(cacheKey)) {
+    
+    const cacheResult = await cache.match(cacheKey);
+    if (cacheResult) {
         return new Response('match', { status: 200 });
     } else {
         // Store the response in the cache
         const response = new Response('no match', { status: 200 });
         const cacheResponse = new Response(response.body, response);
-        cache.put(cacheKey, cacheResponse.clone());
+        await cache.put(cacheKey, cacheResponse.clone());
 
         return new Response('no match', { status: 200 });
     }
