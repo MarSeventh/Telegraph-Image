@@ -7,11 +7,12 @@ export async function onRequest(context) {
 
     const del = url.searchParams.get('del');
     if (del) {
-        await cache.delete(cacheKey);
+        await cache.put(cacheKey, null);
         return new Response('deleted', { status: 200 });
     }
     
     const cacheResult = await cache.match(cacheKey);
+    console.log(cacheResult);
     if (cacheResult) {
         return new Response('match', { status: 200 });
     } else {
