@@ -1,5 +1,5 @@
 export async function onRequest(context) {
-    const { request } = context;
+    const { request, env } = context;
 
     const url = new URL(request.url);
     const cache = caches.default;
