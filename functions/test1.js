@@ -7,7 +7,9 @@ export async function onRequest(context) {
 
     const del = url.searchParams.get('del');
     if (del) {
-        await cache.delete(cacheKey);
+        await cache.put(cacheKey, new Response(null, {
+            headers: { 'Cache-Control': 'max-age=0' },
+        }));
         return new Response('deleted', { status: 200 });
     }
 
