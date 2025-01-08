@@ -1,0 +1,20 @@
+export async function onRequest(context) {
+    const { request } = context;
+
+    const url = new URL(request.url);
+    const cache = caches.default;
+    const cacheKey = `${url.origin}/123`;
+
+    const del = url.searchParams.get('del');
+    if (del) {
+        await cache.delete(cacheKey);
+        return new Response('deleted', { status: 200 });
+    }
+
+    if (cache.match(cacheKey)) {
+        return new Response('match', { status: 200 });
+    } else {
+        return new Response('no match', { status: 200 });
+    }
+    
+}
