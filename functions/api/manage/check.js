@@ -14,4 +14,4 @@ export async function onRequest(context) {
         return new Response('true', { status: 200 });
     }
 
-  }
+}

@@ -139,10 +139,22 @@ export async function onRequestPost(context) {  // Contents of context object
     const unique_index = time + Math.floor(Math.random() * 10000);
     let fullId = '';
     if (nameType === 'index') {
+        // 仅前缀
         fullId = unique_index + '.' + fileExt;
     } else if (nameType === 'origin') {
+        // 仅文件名
         fullId = fileName? fileName : unique_index + '.' + fileExt;
+    } else if (nameType === 'short') {
+        // 短链接，8位大小写字母+数字的随机字符
+        while (true) {
+            const shortId = generateShortId(8);
+            if (await env.img_url.get(shortId) === null) {
+                fullId = shortId + '.' + fileExt;
+                break;
+            }
+        }
     } else {
+        // 默认方式：前缀+文件名
         fullId = fileName? unique_index + '_' + fileName : unique_index + '.' + fileExt;
     }
 
@@ -495,4 +507,14 @@ async function isBlockedUploadIp(env, uploadIp) {
     }
 
     return list.includes(uploadIp);
+}
+
+// 生成短链接
+function generateShortId(length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
 }
