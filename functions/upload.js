@@ -148,7 +148,8 @@ export async function onRequestPost(context) {  // Contents of context object
         // 短链接，8位大小写字母+数字的随机字符
         while (true) {
             const shortId = generateShortId(8);
-            if (await env.img_url.get(shortId) === null) {
+            const testFullId = shortId + '.' + fileExt;
+            if (await env.img_url.get(testFullId) === null) {
                 fullId = shortId + '.' + fileExt;
                 break;
             }
