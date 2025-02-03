@@ -505,19 +505,13 @@ async function moderateContent(env, url, metadata) {
         metadata.Label = "None";
     } else {
         try {
-            let i = 0;
-            while (i < 3) {
-                // 三次尝试
-                const fetchResponse = await fetch(`https://api.moderatecontent.com/moderate/?key=${apikey}&url=${url}`);
-                if (!fetchResponse.ok) {
-                    throw new Error(`HTTP error! status: ${fetchResponse.status}`);
-                }
-                const moderate_data = await fetchResponse.json();
-                if (moderate_data.rating_label) {
-                    metadata.Label = moderate_data.rating_label;
-                    break;
-                }
-                i++;
+            const fetchResponse = await fetch(`https://api.moderatecontent.com/moderate/?key=${apikey}&url=${url}`);
+            if (!fetchResponse.ok) {
+                throw new Error(`HTTP error! status: ${fetchResponse.status}`);
+            }
+            const moderate_data = await fetchResponse.json();
+            if (moderate_data.rating_label) {
+                metadata.Label = moderate_data.rating_label;
             }
         } catch (error) {
             console.error('Moderate Error:', error);
