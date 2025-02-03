@@ -185,7 +185,7 @@ export async function onRequestPost(context) {  // Contents of context object
     // 上传到不同渠道
     if (uploadChannel === 'CloudflareR2') {
         // -------------CloudFlare R2 渠道---------------
-        const res = await uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink);
+        const res = await uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink, url);
         if (res.status === 200 || !autoRetry) {
             return res;
         } else {
@@ -225,11 +225,11 @@ async function tryRetry(err, env, uploadChannel, formdata, fullId, metadata, fil
         if (channelList[i] !== uploadChannel) {
             let res = null;
             if (channelList[i] === 'CloudflareR2') {
-                res = await uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink);
+                res = await uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink, url);
             } else if (channelList[i] === 'TelegramNew') {
                 res = await uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fileName, fileType, url, clonedRequest, returnLink);
             } else if (channelList[i] === 'S3') {
-                res = await uploadFileToS3(env, formdata, fullId, metadata, returnLink);
+                res = await uploadFileToS3(env, formdata, fullId, metadata, returnLink, url);
             }
 
             if (res.status === 200) {
@@ -245,7 +245,7 @@ async function tryRetry(err, env, uploadChannel, formdata, fullId, metadata, fil
 
 
 // 上传到Cloudflare R2
-async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink) {
+async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink, originUrl) {
     // 检查R2数据库是否配置
     if (typeof env.img_r2 == "undefined" || env.img_r2 == null || env.img_r2 == "") {
         return new Response('Error: Please configure R2 database', { status: 500 });
@@ -256,14 +256,31 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     // 写入R2数据库
     await R2DataBase.put(fullId, formdata.get('file'));
 
+    // 更新metadata
+    metadata.Channel = "CloudflareR2";
+
     // 图像审查
     const R2PublicUrl = env.R2PublicUrl;
-    const moderateUrl = `${R2PublicUrl}/${fullId}`;
+    let moderateUrl = `${R2PublicUrl}/${fullId}`;
     metadata = await moderateContent(env, moderateUrl, metadata);
+    if (env.ModerateContentApiKey && metadata.Label !== 'None') {
+        // 尝试预写入KV数据库的方式
+        try {
+            await env.img_url.put(fullId, "", { metadata: metadata });
+        } catch (error) {
+            return new Response('Error: Failed to write to KV database', { status: 500 });
+        }
 
-    // 更新metadata，写入KV数据库
+        moderateUrl = moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
+        metadata = await moderateContent(env, moderateUrl, metadata);
+
+        // 清除缓存
+        const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
+        await purgeCDNCache(env, cdnUrl, originUrl);
+    }
+
+    // 写入KV数据库
     try {
-        metadata.Channel = "CloudflareR2";
         await env.img_url.put(fullId, "", {
             metadata: metadata,
         });
@@ -332,7 +349,7 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         metadata.S3Location = s3Url;
 
         // 图像审查，预写入 KV 数据库
-        if ( env.ModerateContentApiKey ) {
+        if (env.ModerateContentApiKey) {
             try {
                 await env.img_url.put(fullId, "", { metadata: metadata });
             } catch (error) {
