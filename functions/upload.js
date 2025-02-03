@@ -504,12 +504,20 @@ async function moderateContent(env, url, metadata) {
         metadata.Label = "None";
     } else {
         try {
-            const fetchResponse = await fetch(`https://api.moderatecontent.com/moderate/?key=${apikey}&url=${url}`);
-            if (!fetchResponse.ok) {
-                throw new Error(`HTTP error! status: ${fetchResponse.status}`);
+            let i = 0;
+            while (i < 3) {
+                // 三次尝试
+                const fetchResponse = await fetch(`https://api.moderatecontent.com/moderate/?key=${apikey}&url=${url}`);
+                if (!fetchResponse.ok) {
+                    throw new Error(`HTTP error! status: ${fetchResponse.status}`);
+                }
+                const moderate_data = await fetchResponse.json();
+                metadata.Label = moderate_data.rating_label;
+                if (metadata.Label !== 'None') {
+                    break;
+                }
+                i++;
             }
-            const moderate_data = await fetchResponse.json();
-            metadata.Label = moderate_data.rating_label;
         } catch (error) {
             console.error('Moderate Error:', error);
             // 将不带审查的图片写入数据库
