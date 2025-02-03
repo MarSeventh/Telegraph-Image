@@ -265,17 +265,18 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     metadata = await moderateContent(env, moderateUrl, metadata);
     if (env.ModerateContentApiKey && metadata.Label === 'None') {
         // 尝试预写入KV数据库的方式
+        const moderateId = encodeURIComponent(fullId);
         try {
-            await env.img_url.put(fullId, "", { metadata: metadata });
+            await env.img_url.put(moderateId, "", { metadata: metadata });
         } catch (error) {
-            return new Response('Error: Failed to write to KV database', { status: 500 });
+            return new Response("Error: Failed to write to KV database", { status: 500 });
         }
 
-        moderateUrl = moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
+        const moderateUrl = `https://${originUrl.hostname}/file/${moderateId}`;
         metadata = await moderateContent(env, moderateUrl, metadata);
 
         // 清除缓存
-        const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
+        const cdnUrl = `https://${originUrl.hostname}/file/${moderateId}`;
         await purgeCDNCache(env, cdnUrl, originUrl);
     }
 
@@ -350,17 +351,18 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
 
         // 图像审查，预写入 KV 数据库
         if (env.ModerateContentApiKey) {
+            const moderateId = encodeURIComponent(fullId);
             try {
-                await env.img_url.put(fullId, "", { metadata: metadata });
+                await env.img_url.put(moderateId, "", { metadata: metadata });
             } catch (error) {
                 return new Response("Error: Failed to write to KV database", { status: 500 });
             }
 
-            const moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
+            const moderateUrl = `https://${originUrl.hostname}/file/${moderateId}`;
             metadata = await moderateContent(env, moderateUrl, metadata);
 
             // 清除缓存
-            const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
+            const cdnUrl = `https://${originUrl.hostname}/file/${moderateId}`;
             await purgeCDNCache(env, cdnUrl, originUrl);
         }
 
@@ -500,8 +502,6 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
 // 图像审查
 async function moderateContent(env, url, metadata) {
     const apikey = env.ModerateContentApiKey;
-    // 对url进行编码
-    url = encodeURIComponent(url);
     if (apikey == undefined || apikey == null || apikey == "") {
         metadata.Label = "None";
     } else {
