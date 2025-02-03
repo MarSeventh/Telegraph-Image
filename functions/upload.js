@@ -99,8 +99,8 @@ export async function onRequestPost(context) {  // Contents of context object
     }
     
     // 错误处理和遥测
-    await errorHandling(context);
-    telemetryData(context);
+    // await errorHandling(context);
+    // telemetryData(context);
 
     // img_url 未定义或为空的处理逻辑
     if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
@@ -120,6 +120,7 @@ export async function onRequestPost(context) {  // Contents of context object
         UploadIP: uploadIp,
         ListType: "None",
         TimeStamp: time,
+        Label: "None",
     }
 
 
@@ -265,18 +266,17 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     metadata = await moderateContent(env, moderateUrl, metadata);
     if (env.ModerateContentApiKey && metadata.Label === 'None') {
         // 尝试预写入KV数据库的方式
-        const moderateId = encodeURIComponent(fullId);
         try {
-            await env.img_url.put(moderateId, "", { metadata: metadata });
+            await env.img_url.put(fullId, "", { metadata: metadata });
         } catch (error) {
             return new Response("Error: Failed to write to KV database", { status: 500 });
         }
 
-        const moderateUrl = `https://${originUrl.hostname}/file/${moderateId}`;
+        const moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
         metadata = await moderateContent(env, moderateUrl, metadata);
 
         // 清除缓存
-        const cdnUrl = `https://${originUrl.hostname}/file/${moderateId}`;
+        const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
         await purgeCDNCache(env, cdnUrl, originUrl);
     }
 
@@ -351,18 +351,17 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
 
         // 图像审查，预写入 KV 数据库
         if (env.ModerateContentApiKey) {
-            const moderateId = encodeURIComponent(fullId);
             try {
-                await env.img_url.put(moderateId, "", { metadata: metadata });
+                await env.img_url.put(fullId, "", { metadata: metadata });
             } catch (error) {
                 return new Response("Error: Failed to write to KV database", { status: 500 });
             }
 
-            const moderateUrl = `https://${originUrl.hostname}/file/${moderateId}`;
+            const moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
             metadata = await moderateContent(env, moderateUrl, metadata);
 
             // 清除缓存
-            const cdnUrl = `https://${originUrl.hostname}/file/${moderateId}`;
+            const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
             await purgeCDNCache(env, cdnUrl, originUrl);
         }
 
@@ -514,8 +513,8 @@ async function moderateContent(env, url, metadata) {
                     throw new Error(`HTTP error! status: ${fetchResponse.status}`);
                 }
                 const moderate_data = await fetchResponse.json();
-                metadata.Label = moderate_data.rating_label;
-                if (metadata.Label !== 'None') {
+                if (moderate_data.rating_label) {
+                    metadata.Label = moderate_data.rating_label;
                     break;
                 }
                 i++;
