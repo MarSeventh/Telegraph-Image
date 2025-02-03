@@ -500,6 +500,8 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
 // 图像审查
 async function moderateContent(env, url, metadata) {
     const apikey = env.ModerateContentApiKey;
+    // 对url进行编码
+    url = encodeURI(url);
     if (apikey == undefined || apikey == null || apikey == "") {
         metadata.Label = "None";
     } else {
