@@ -38,7 +38,7 @@ export async function onRequest(context) {
               region: env.S3_REGION || "auto",
           });
 
-          const s3Url = `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
+          const s3Url = img.metadata?.S3Location || `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
 
           try {
               const response = await aws.fetch(s3Url, { method: "DELETE" });

@@ -99,8 +99,8 @@ export async function onRequestPost(context) {  // Contents of context object
     }
     
     // 错误处理和遥测
-    // await errorHandling(context);
-    // telemetryData(context);
+    await errorHandling(context);
+    telemetryData(context);
 
     // img_url 未定义或为空的处理逻辑
     if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
@@ -193,7 +193,7 @@ export async function onRequestPost(context) {  // Contents of context object
         }
     } else if (uploadChannel === 'S3') {
         // -------------S3 渠道---------------
-        const res = await uploadFileToS3(env, formdata, fullId, metadata, returnLink);
+        const res = await uploadFileToS3(env, formdata, fullId, metadata, returnLink, url);
         if (res.status === 200 || !autoRetry) {
             return res;
         } else {
@@ -284,7 +284,7 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
 
 
 // 上传到S3（支持自定义端点）
-async function uploadFileToS3(env, formdata, fullId, metadata, returnLink) {
+async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, originUrl) {
     // 检查 S3 配置
     if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.S3_BUCKET_NAME || !env.S3_ENDPOINT) {
         return new Response("Error: S3 configuration is missing", { status: 500 });
@@ -327,10 +327,28 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink) {
             throw new Error(`S3 Upload Failed: ${response.statusText} - ${responseText}`);
         }
 
-        // 更新 metadata 并存入 KV
+        // 更新 metadata
         metadata.Channel = "S3";
         metadata.S3Location = s3Url;
 
+        // 图像审查，预写入 KV 数据库
+        if ( env.ModerateContentApiKey ) {
+            try {
+                await env.img_url.put(fullId, "", { metadata: metadata });
+            } catch (error) {
+                return new Response("Error: Failed to write to KV database", { status: 500 });
+            }
+
+            const moderateUrl = `https://${url.hostname}/file/${fullId}`;
+            metadata = await moderateContent(env, moderateUrl, metadata);
+
+            // 清除缓存
+            const cdnUrl = `https://${url.hostname}/file/${fullId}`;
+            await purgeCDNCache(env, cdnUrl, originUrl);
+        }
+
+        
+        // 写入 KV 数据库
         try {
             await env.img_url.put(fullId, "", { metadata: metadata });
         } catch (error) {

@@ -106,7 +106,7 @@ export async function onRequest(context) {  // Contents of context object
             region: env.S3_REGION || "auto",
         });
 
-        const s3Url = `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
+        const s3Url = imgRecord.metadata?.S3Location || `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
 
         try {
             const response = await aws.fetch(s3Url, { method: "GET" });
