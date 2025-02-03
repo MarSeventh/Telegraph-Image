@@ -339,11 +339,11 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
                 return new Response("Error: Failed to write to KV database", { status: 500 });
             }
 
-            const moderateUrl = `https://${url.hostname}/file/${fullId}`;
+            const moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
             metadata = await moderateContent(env, moderateUrl, metadata);
 
             // 清除缓存
-            const cdnUrl = `https://${url.hostname}/file/${fullId}`;
+            const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
             await purgeCDNCache(env, cdnUrl, originUrl);
         }
 
