@@ -1,4 +1,5 @@
 import { errorHandling, telemetryData } from "./utils/middleware";
+import { AwsClient } from 'aws4fetch';
 
 function UnauthorizedException(reason) {
     return new Response(reason, {
@@ -89,14 +90,17 @@ export async function onRequestPost(context) {  // Contents of context object
         case 'cfr2':
             uploadChannel = 'CloudflareR2';
             break;
+        case 's3':
+            uploadChannel = 'S3';
+            break;
         default:
             uploadChannel = 'TelegramNew';
             break;
     }
     
     // 错误处理和遥测
-    await errorHandling(context);
-    telemetryData(context);
+    // await errorHandling(context);
+    // telemetryData(context);
 
     // img_url 未定义或为空的处理逻辑
     if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
@@ -187,6 +191,14 @@ export async function onRequestPost(context) {  // Contents of context object
         } else {
             err = await res.text();
         }
+    } else if (uploadChannel === 'S3') {
+        // -------------S3 渠道---------------
+        const res = await uploadFileToS3(env, formdata, fullId, metadata, returnLink);
+        if (res.status === 200 || !autoRetry) {
+            return res;
+        } else {
+            err = await res.text();
+        }
     } else {
         // ----------------Telegram New 渠道-------------------
         const res = await uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fileName, fileType, url, clonedRequest, returnLink);
@@ -206,7 +218,7 @@ export async function onRequestPost(context) {  // Contents of context object
 // 自动切换渠道重试
 async function tryRetry(err, env, uploadChannel, formdata, fullId, metadata, fileExt, fileName, fileType, url, clonedRequest, returnLink) {
     // 渠道列表
-    const channelList = ['CloudflareR2', 'TelegramNew'];
+    const channelList = ['CloudflareR2', 'TelegramNew', 'S3'];
     const errMessages = {};
     errMessages[uploadChannel] = 'Error: ' + uploadChannel + err;
     for (let i = 0; i < channelList.length; i++) {
@@ -216,7 +228,10 @@ async function tryRetry(err, env, uploadChannel, formdata, fullId, metadata, fil
                 res = await uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnLink);
             } else if (channelList[i] === 'TelegramNew') {
                 res = await uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fileName, fileType, url, clonedRequest, returnLink);
+            } else if (channelList[i] === 'S3') {
+                res = await uploadFileToS3(env, formdata, fullId, metadata, returnLink);
             }
+
             if (res.status === 200) {
                 return res;
             } else {
@@ -266,6 +281,75 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
         }
     );
 }
+
+
+// 上传到S3（支持自定义端点）
+async function uploadFileToS3(env, formdata, fullId, metadata, returnLink) {
+    // 检查 S3 配置
+    if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.S3_BUCKET_NAME || !env.S3_ENDPOINT) {
+        return new Response("Error: S3 configuration is missing", { status: 500 });
+    }
+
+    // 创建 AWS V4 签名客户端
+    const aws = new AwsClient({
+        accessKeyId: env.S3_ACCESS_KEY_ID,
+        secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+        service: "s3",
+        region: env.S3_REGION || "auto", // R2 可用 "auto"
+    });
+
+    // 获取文件
+    const file = formdata.get("file");
+    if (!file) return new Response("Error: No file provided", { status: 400 });
+
+    // 转换 `Blob` 为 `Uint8Array`
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // 确保 `S3_ENDPOINT` 采用路径风格
+    const s3Url = `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${fullId}`;
+
+    try {
+        // 执行 S3 兼容 `PUT` 上传
+        const response = await aws.fetch(s3Url, {
+            method: "PUT",
+            body: uint8Array, // 需要 Uint8Array 格式
+            headers: {
+                "Content-Type": file.type,
+                "Content-Length": uint8Array.length.toString(), // 确保 Content-Length 计算正确
+            },
+        });
+
+        // 获取详细错误信息
+        const responseText = await response.text();
+
+        if (!response.ok) {
+            throw new Error(`S3 Upload Failed: ${response.statusText} - ${responseText}`);
+        }
+
+        // 更新 metadata 并存入 KV
+        metadata.Channel = "S3";
+        metadata.S3Location = s3Url;
+
+        try {
+            await env.img_url.put(fullId, "", { metadata: metadata });
+        } catch (error) {
+            return new Response("Error: Failed to write to KV database", { status: 500 });
+        }
+
+        // 返回上传成功响应
+        return new Response(
+            JSON.stringify([{ src: returnLink }]),
+            {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+    } catch (error) {
+        return new Response(`Error: Failed to upload to S3 - ${error.message}`, { status: 500 });
+    }
+}
+
 
 
 // 上传到Telegram
@@ -463,6 +547,10 @@ async function getFilePath(env, file_id) {
 }
 
 async function purgeCDNCache(env, cdnUrl, url) {
+    if (env.dev_mode === 'true') {
+        return;
+    }
+
     const options = {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-Auth-Email': `${env.CF_EMAIL}`, 'X-Auth-Key': `${env.CF_API_KEY}`},

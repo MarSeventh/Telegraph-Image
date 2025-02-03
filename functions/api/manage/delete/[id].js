@@ -1,3 +1,5 @@
+import { AwsClient } from "aws4fetch";
+
 export async function onRequest(context) {
     // Contents of context object
     const {
@@ -24,6 +26,32 @@ export async function onRequest(context) {
         await env.img_r2.delete(params.id);
       }
 
+      // S3 渠道的图片，删除S3中对应的图片
+      if (img.metadata?.Channel === "S3") {
+          if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.S3_BUCKET_NAME || !env.S3_ENDPOINT) {
+              return new Response("Error: S3 configuration is missing", { status: 500 });
+          }
+
+          const aws = new AwsClient({
+              accessKeyId: env.S3_ACCESS_KEY_ID,
+              secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+              region: env.S3_REGION || "auto",
+          });
+
+          const s3Url = `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
+
+          try {
+              const response = await aws.fetch(s3Url, { method: "DELETE" });
+
+              if (!response.ok) {
+                  return new Response(`Error: Failed to delete from S3 - ${response.statusText}`, { status: response.status });
+              }
+          } catch (error) {
+              return new Response(`Error: S3 Delete Failed - ${error.message}`, { status: 500 });
+          }
+      }
+
+      // 删除KV中的图片信息
       await env.img_url.delete(params.id);
       const info = JSON.stringify(params.id);
 

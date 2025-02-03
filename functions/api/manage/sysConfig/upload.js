@@ -40,8 +40,27 @@ export async function onRequest(context) {
             })
         }
 
+        // 读取s3渠道配置
+        const s3 = []
+        if (env.S3_ACCESS_KEY_ID) {
+            s3.push({
+                id: 1,
+                name: 'S3_1',
+                type: 's3',
+                savePath: 'environment variable',
+                accessKeyId: env.S3_ACCESS_KEY_ID,
+                secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+                region: env.S3_REGION || 'auto',
+                bucketName: env.S3_BUCKET_NAME,
+                endpoint: env.S3_ENDPOINT,
+                enabled: true,
+                fixed: true,
+            })
+        }
+
         settings.telegram = telegram
         settings.cfr2 = cfr2
+        settings.s3 = s3
         return new Response(JSON.stringify(settings), {
             headers: {
                 'content-type': 'application/json',

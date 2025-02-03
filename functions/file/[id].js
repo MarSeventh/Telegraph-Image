@@ -1,3 +1,5 @@
+import { AwsClient } from "aws4fetch";
+
 let targetUrl = '';
 
 export async function onRequest(context) {  // Contents of context object
@@ -92,7 +94,46 @@ export async function onRequest(context) {  // Contents of context object
         return newRes;
     }
 
+    // S3渠道
+    if (imgRecord.metadata?.Channel === "S3") {
+        if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.S3_BUCKET_NAME || !env.S3_ENDPOINT) {
+            return new Response("Error: S3 configuration is missing", { status: 500 });
+        }
 
+        const aws = new AwsClient({
+            accessKeyId: env.S3_ACCESS_KEY_ID,
+            secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+            region: env.S3_REGION || "auto",
+        });
+
+        const s3Url = `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
+
+        try {
+            const response = await aws.fetch(s3Url, { method: "GET" });
+
+            if (!response.ok) {
+                return new Response(`Error: S3 Fetch Failed - ${response.statusText}`, { status: response.status });
+            }
+
+            const headers = new Headers(response.headers);
+            headers.set("Content-Disposition", `inline; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
+            headers.set("Access-Control-Allow-Origin", "*");
+            if (fileType) {
+                headers.set("Content-Type", fileType);
+            }
+
+            // 根据Referer设置CDN缓存策略，如果是从/或/dashboard等访问，则仅允许浏览器缓存；否则设置为public，缓存时间为7天
+            if (Referer && Referer.includes(url.origin)) {
+                headers.set('Cache-Control', 'private, max-age=86400');
+            } else {
+                headers.set('Cache-Control', 'public, max-age=604800');
+            }
+
+            return new Response(response.body, { status: 200, headers });
+        } catch (error) {
+            return new Response(`Error: Failed to fetch from S3 - ${error.message}`, { status: 500 });
+        }
+    }
 
     
     // Telegram及Telegraph渠道
