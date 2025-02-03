@@ -263,7 +263,7 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     const R2PublicUrl = env.R2PublicUrl;
     let moderateUrl = `${R2PublicUrl}/${fullId}`;
     metadata = await moderateContent(env, moderateUrl, metadata);
-    if (env.ModerateContentApiKey && metadata.Label !== 'None') {
+    if (env.ModerateContentApiKey && metadata.Label === 'None') {
         // 尝试预写入KV数据库的方式
         try {
             await env.img_url.put(fullId, "", { metadata: metadata });
