@@ -296,17 +296,27 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
 
 // 上传到S3（支持自定义端点）
 async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, originUrl) {
-    // 检查 S3 配置
-    if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.S3_BUCKET_NAME || !env.S3_ENDPOINT) {
-        return new Response("Error: S3 configuration is missing", { status: 500 });
+    // 选择一个 S3 渠道上传，若负载均衡开启，则随机选择一个；否则选择第一个
+    const s3Settings = uploadConfig.s3;
+    const s3Channels = s3Settings.channels;
+    const s3Channel = s3Settings.loadBalance.enabled? s3Channels[Math.floor(Math.random() * s3Channels.length)] : s3Channels[0];
+    if (!s3Channel) {
+        return new Response('Error: No S3 channel provided', { status: 400 });
     }
+
+    s3Endpoint = s3Channel.endpoint;
+    s3AccessKeyId = s3Channel.accessKeyId;
+    s3SecretAccessKey = s3Channel.secretAccessKey;
+    s3BucketName = s3Channel.bucketName;
+    s3Region = s3Channel.region;
+
 
     // 创建 AWS V4 签名客户端
     const aws = new AwsClient({
-        accessKeyId: env.S3_ACCESS_KEY_ID,
-        secretAccessKey: env.S3_SECRET_ACCESS_KEY,
+        accessKeyId: s3AccessKeyId,
+        secretAccessKey: s3SecretAccessKey,
         service: "s3",
-        region: env.S3_REGION || "auto", // R2 可用 "auto"
+        region: s3Region || "auto", // R2 可用 "auto"
     });
 
     // 获取文件
@@ -318,7 +328,7 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
     const uint8Array = new Uint8Array(arrayBuffer);
 
     // 确保 `S3_ENDPOINT` 采用路径风格
-    const s3Url = `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${fullId}`;
+    const s3Url = `${s3Endpoint}/${s3BucketName}/${fullId}`;
 
     try {
         // 执行 S3 兼容 `PUT` 上传
@@ -341,9 +351,9 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         // 更新 metadata
         metadata.Channel = "S3";
         metadata.S3Location = s3Url;
-        metadata.S3AccessKeyId = env.S3_ACCESS_KEY_ID;
-        metadata.S3SecretAccessKey = env.S3_SECRET_ACCESS_KEY;
-        metadata.S3Region = env.S3_REGION || "auto";
+        metadata.S3AccessKeyId = s3AccessKeyId;
+        metadata.S3SecretAccessKey = s3SecretAccessKey;
+        metadata.S3Region = s3Region || "auto";
 
         // 图像审查，预写入 KV 数据库
         if (env.ModerateContentApiKey) {
@@ -390,6 +400,10 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
     const tgSettings = uploadConfig.telegram;
     const tgChannels = tgSettings.channels;
     const tgChannel = tgSettings.loadBalance.enabled? tgChannels[Math.floor(Math.random() * tgChannels.length)] : tgChannels[0];
+    if (!tgChannel) {
+        return new Response('Error: No Telegram channel provided', { status: 400 });
+    }
+
     const tgBotToken = tgChannel.botToken;
     const tgChatId = tgChannel.chatId;
 
