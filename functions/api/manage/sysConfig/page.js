@@ -115,9 +115,11 @@ export async function getPageConfig(kv, env) {
     }
 
     // 用KV中的设置覆盖默认设置
-    for (let i = 0; i < config.length; i++) {
-        if (settingsKV.config[i]?.value) {
-            config[i].value = settingsKV.config[i].value
+    for (let i = 0; i < settingsKV.config?.length; i++) {
+        const item = settingsKV.config[i]
+        const index = config.findIndex(x => x.id === item.id)
+        if (index !== -1) {
+            config[index] = item
         }
     }
 
