@@ -20,7 +20,7 @@ export async function onRequest(context) {
     allowRandom = othersConfig.randomImageAPI.enabled;
 
     // 检查是否启用了随机图功能
-    if (allowRandom != "true") {
+    if (allowRandom != true) {
         return new Response(JSON.stringify({ error: "Random is disabled" }), { status: 403 });
     }
 

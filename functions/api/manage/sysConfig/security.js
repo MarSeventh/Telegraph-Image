@@ -69,7 +69,7 @@ export async function getSecurityConfig(kv, env) {
     // 访问管理
     const access = {
         allowedDomains: env.ALLOWED_DOMAINS,
-        whiteListMode: env.WhiteList_Mode || false
+        whiteListMode: env.WhiteList_Mode === 'true',
     }
     settings.access = access
 

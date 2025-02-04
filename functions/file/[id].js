@@ -228,7 +228,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
                 return await returnBlockImg(url);
             }
             //check if the env variables WhiteList_Mode are set
-            if (whiteListMode == "true") {
+            if (whiteListMode) {
                 //if the env variables WhiteList_Mode are set, redirect to the image
                 return await returnWhiteListImg(url);
             } else {

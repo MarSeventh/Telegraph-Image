@@ -10,7 +10,7 @@ export async function errorHandling(context) {
   disableTelemetry = !othersConfig.telemetry.enabled;
 
   const env = context.env;
-  if (typeof disableTelemetry == "undefined" || disableTelemetry == null || disableTelemetry == "") {
+  if (!disableTelemetry) {
     context.data.telemetry = true;
     let remoteSampleRate = 0.001;
     try {
@@ -31,7 +31,11 @@ export async function errorHandling(context) {
 
 export async function telemetryData(context) {
   const env = context.env;
-  if (typeof disableTelemetry == "undefined" || disableTelemetry == null || disableTelemetry == "") {
+  // 读取KV中的设置
+  const othersConfig = await fetchOthersConfig(context.env);
+  disableTelemetry = !othersConfig.telemetry.enabled;
+  
+  if (!disableTelemetry) {
     try {
       const parsedHeaders = {};
       context.request.headers.forEach((value, key) => {
