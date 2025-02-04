@@ -2,7 +2,14 @@ import { fetchPageConfig } from "./utils/sysConfig";
 
 export async function onRequestGet(context) {
     const { request, env, params, waitUntil, next, data } = context;
-    const userConfig = await fetchPageConfig(env);
+    const PageConfig = await fetchPageConfig(env);
+    const userConfigList = PageConfig.config;
+    const userConfig = {};
+    for (const config of userConfigList) {
+        if (config.value) {
+            userConfig[config.id] = config.value;
+        }
+    }
 
     // 检查 USER_CONFIG 是否为空或未定义
     if (!userConfig) {
@@ -11,7 +18,7 @@ export async function onRequestGet(context) {
 
     try {
         // 尝试解析 USER_CONFIG 为 JSON
-        const parsedConfig = JSON.parse(userConfig);
+        const parsedConfig = userConfig;
         // 检查解析后的结果是否为对象
         if (typeof parsedConfig === 'object' && parsedConfig !== null) {
             return new Response(JSON.stringify(parsedConfig), { status: 200 });
