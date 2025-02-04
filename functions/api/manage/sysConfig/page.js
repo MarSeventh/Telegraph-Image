@@ -55,6 +55,10 @@ export async function onRequest(context) {
                 label: '页脚传送门链接',
             },
             {
+                id: 'disableFooter',
+                label: '隐藏页脚',
+            },
+            {
                 id: 'urlPrefix',
                 label: '自定义URL前缀',
             }

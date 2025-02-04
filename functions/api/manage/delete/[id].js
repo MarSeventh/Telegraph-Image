@@ -28,17 +28,13 @@ export async function onRequest(context) {
 
       // S3 渠道的图片，删除S3中对应的图片
       if (img.metadata?.Channel === "S3") {
-          if (!env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY || !env.S3_BUCKET_NAME || !env.S3_ENDPOINT) {
-              return new Response("Error: S3 configuration is missing", { status: 500 });
-          }
-
           const aws = new AwsClient({
-              accessKeyId: env.S3_ACCESS_KEY_ID,
-              secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-              region: env.S3_REGION || "auto",
+              accessKeyId: imgRecord.metadata?.S3AccessKeyId,
+              secretAccessKey: imgRecord.metadata?.S3SecretAccessKey,
+              region: imgRecord.metadata?.S3Region,
           });
 
-          const s3Url = img.metadata?.S3Location || `${env.S3_ENDPOINT}/${env.S3_BUCKET_NAME}/${params.id}`;
+          const s3Url = img.metadata?.S3Location;
 
           try {
               const response = await aws.fetch(s3Url, { method: "DELETE" });

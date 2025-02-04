@@ -18,7 +18,7 @@ export async function onRequest(context) {
         if (env.TG_BOT_TOKEN) {
             telegram.push({
                 id: 1,
-                name: 'Telegram_1',
+                name: 'Telegram',
                 type: 'telegram',
                 savePath: 'environment variable',
                 botToken: env.TG_BOT_TOKEN,
@@ -32,7 +32,7 @@ export async function onRequest(context) {
         if (env.img_r2) {
             cfr2.push({
                 id: 1,
-                name: 'Cloudflare R2_1',
+                name: 'Cloudflare R2',
                 type: 'cfr2',
                 savePath: 'environment variable',
                 enabled: true,
@@ -45,7 +45,7 @@ export async function onRequest(context) {
         if (env.S3_ACCESS_KEY_ID) {
             s3.push({
                 id: 1,
-                name: 'S3_1',
+                name: 'S3',
                 type: 's3',
                 savePath: 'environment variable',
                 accessKeyId: env.S3_ACCESS_KEY_ID,

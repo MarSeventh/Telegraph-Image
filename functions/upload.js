@@ -333,6 +333,9 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         // 更新 metadata
         metadata.Channel = "S3";
         metadata.S3Location = s3Url;
+        metadata.S3AccessKeyId = env.S3_ACCESS_KEY_ID;
+        metadata.S3SecretAccessKey = env.S3_SECRET_ACCESS_KEY;
+        metadata.S3Region = env.S3_REGION || "auto";
 
         // 图像审查，预写入 KV 数据库
         if (env.ModerateContentApiKey) {
