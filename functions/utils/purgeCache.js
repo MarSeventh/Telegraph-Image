@@ -1,4 +1,4 @@
-import { fetchOthersConfig } from "../../../utils/sysConfig";
+import { fetchOthersConfig } from "./sysConfig";
 
 let othersConfig = {};
 let cfZoneId = "";
