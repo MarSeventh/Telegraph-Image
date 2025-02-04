@@ -1,6 +1,10 @@
 import { AwsClient } from "aws4fetch";
+import { fetchSecurityConfig } from "../utils/sysConfig";
 
 let targetUrl = '';
+let securityConfig = {};
+let allowedDomains = null;
+let whiteListMode = false;
 
 export async function onRequest(context) {  // Contents of context object
     const {
@@ -18,14 +22,19 @@ export async function onRequest(context) {  // Contents of context object
     } catch (e) {
         return new Response('Error: Decode Image ID Failed', { status: 400 });
     }
+
+    // 读取安全配置
+    securityConfig = await fetchSecurityConfig(env);
+    allowedDomains = securityConfig.access.allowedDomains;
+    whiteListMode = securityConfig.access.whiteListMode;
     
     const url = new URL(request.url);
     let Referer = request.headers.get('Referer')
     if (Referer) {
         try {
             let refererUrl = new URL(Referer);
-            if (env.ALLOWED_DOMAINS && env.ALLOWED_DOMAINS.trim() !== '') {
-                let allowedDomains = env.ALLOWED_DOMAINS.split(',');
+            if (allowedDomains && allowedDomains.trim() !== '') {
+                let allowedDomains = allowedDomains.split(',');
                 let isAllowed = allowedDomains.some(domain => {
                     let domainPattern = new RegExp(`(^|\\.)${domain.replace('.', '\\.')}$`); // Escape dot in domain
                     return domainPattern.test(refererUrl.hostname);
@@ -219,7 +228,7 @@ async function returnWithCheck(request, env, url, imgRecord) {
                 return await returnBlockImg(url);
             }
             //check if the env variables WhiteList_Mode are set
-            if (env.WhiteList_Mode == "true") {
+            if (whiteListMode == "true") {
                 //if the env variables WhiteList_Mode are set, redirect to the image
                 return await returnWhiteListImg(url);
             } else {

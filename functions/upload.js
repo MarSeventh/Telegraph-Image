@@ -1,8 +1,12 @@
 import { errorHandling, telemetryData } from "./utils/middleware";
-import { fetchUploadConfig } from "./utils/sysConfig";
+import { fetchUploadConfig, fetchSecurityConfig } from "./utils/sysConfig";
+import { purgeCFCache } from "./utils/purgeCache";
 import { AwsClient } from 'aws4fetch';
 
 let uploadConfig = {};
+let securityConfig = {};
+let rightAuthCode = null;
+let moderateContentApiKey = null;
 
 function UnauthorizedException(reason) {
     return new Response(reason, {
@@ -58,7 +62,7 @@ function authCheck(env, url, request) {
             authCode = getCookieValue(cookies, 'authCode');
         }
     }
-    if (isAuthCodeDefined(env.AUTH_CODE) && !isValidAuthCode(env.AUTH_CODE, authCode)) {
+    if (isAuthCodeDefined(rightAuthCode) && !isValidAuthCode(rightAuthCode, authCode)) {
         return false;
     }
     return true;
@@ -70,6 +74,11 @@ export async function onRequestPost(context) {  // Contents of context object
     const url = new URL(request.url);
     const clonedRequest = await request.clone();
 
+    // 读取安全配置
+    securityConfig = await fetchSecurityConfig(env);
+    rightAuthCode = securityConfig.auth.user.authCode;
+    moderateContentApiKey = securityConfig.upload.moderate.apiKey;
+    
     // 鉴权
     if (!authCheck(env, url, request)) {
         return UnauthorizedException('Unauthorized');
@@ -259,6 +268,11 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     if (typeof env.img_r2 == "undefined" || env.img_r2 == null || env.img_r2 == "") {
         return new Response('Error: Please configure R2 database', { status: 500 });
     }
+    // 检查 R2 渠道是否启用
+    const r2Settings = uploadConfig.cfr2;
+    if (!r2Settings.channels || r2Settings.channels.length === 0) {
+        return new Response('Error: No R2 channel provided', { status: 400 });
+    }
     
     const R2DataBase = env.img_r2;
 
@@ -355,7 +369,7 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         metadata.S3Region = s3Region || "auto";
 
         // 图像审查，预写入 KV 数据库
-        if (env.ModerateContentApiKey) {
+        if (moderateContentApiKey) {
             try {
                 await env.img_url.put(fullId, "", { metadata: metadata });
             } catch (error) {
@@ -516,7 +530,7 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
 
 // 图像审查
 async function moderateContent(env, url, metadata) {
-    const apikey = env.ModerateContentApiKey;
+    const apikey = moderateContentApiKey;
     if (apikey == undefined || apikey == null || apikey == "") {
         metadata.Label = "None";
     } else {
@@ -605,13 +619,12 @@ async function purgeCDNCache(env, cdnUrl, url) {
         return;
     }
 
-    const options = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-Auth-Email': `${env.CF_EMAIL}`, 'X-Auth-Key': `${env.CF_API_KEY}`},
-        body: `{"files":["${ cdnUrl }"]}`
-    };
-
-    await fetch(`https://api.cloudflare.com/client/v4/zones/${ env.CF_ZONE_ID }/purge_cache`, options);
+    // 清除CDN缓存
+    try {
+        await purgeCFCache(env, cdnUrl);
+    } catch (error) {
+        console.error('Failed to clear CDN cache:', error);
+    }
 
     // 清除api/randomFileList API缓存
     try {

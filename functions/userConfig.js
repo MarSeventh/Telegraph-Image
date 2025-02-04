@@ -1,6 +1,8 @@
+import { fetchPageConfig } from "./utils/sysConfig";
+
 export async function onRequestGet(context) {
     const { request, env, params, waitUntil, next, data } = context;
-    const userConfig = env.USER_CONFIG;
+    const userConfig = await fetchPageConfig(env);
 
     // 检查 USER_CONFIG 是否为空或未定义
     if (!userConfig) {

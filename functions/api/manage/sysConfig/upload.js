@@ -63,10 +63,9 @@ export async function getUploadConfig(kv, env) {
         })
     }
     for (const tg of settingsKV.telegram?.channels || []) {
-        // 如果savePath是environment variable，将环境变量值填入
+        // 如果savePath是environment variable，修改可变参数
         if (tg.savePath === 'environment variable') {
-            tg.botToken = env.TG_BOT_TOKEN
-            tg.chatId = env.TG_CHAT_ID
+            telegramChannels[0].enabled = tg.enabled
             continue
         }
         // id自增
@@ -93,13 +92,15 @@ export async function getUploadConfig(kv, env) {
             name: 'Cloudflare R2_env',
             type: 'cfr2',
             savePath: 'environment variable',
+            publicUrl: env.R2PublicUrl,
             enabled: true,
             fixed: true,
         })
     }
     for (const r2 of settingsKV.cfr2?.channels || []) {
-        // 如果savePath是environment variable，将环境变量值填入
+        // 如果savePath是environment variable，修改可变参数
         if (r2.savePath === 'environment variable') {
+            cfr2Channels[0].enabled = r2.enabled
             continue
         }
         // id自增
@@ -135,13 +136,9 @@ export async function getUploadConfig(kv, env) {
         })
     }
     for (const s of settingsKV.s3?.channels || []) {
-        // 如果savePath是environment variable，将环境变量值填入
+        // 如果savePath是environment variable，修改可变参数
         if (s.savePath === 'environment variable') {
-            s.accessKeyId = env.S3_ACCESS_KEY_ID
-            s.secretAccessKey = env.S3_SECRET_ACCESS_KEY
-            s.region = env.S3_REGION || 'auto'
-            s.bucketName = env.S3_BUCKET_NAME
-            s.endpoint = env.S3_ENDPOINT
+            s3Channels[0].enabled = s.enabled
             continue
         }
         // id自增
