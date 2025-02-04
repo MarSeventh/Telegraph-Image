@@ -304,12 +304,11 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
         return new Response('Error: No S3 channel provided', { status: 400 });
     }
 
-    s3Endpoint = s3Channel.endpoint;
-    s3AccessKeyId = s3Channel.accessKeyId;
-    s3SecretAccessKey = s3Channel.secretAccessKey;
-    s3BucketName = s3Channel.bucketName;
-    s3Region = s3Channel.region;
-
+    const s3Endpoint = s3Channel.endpoint;
+    const s3AccessKeyId = s3Channel.accessKeyId;
+    const s3SecretAccessKey = s3Channel.secretAccessKey;
+    const s3BucketName = s3Channel.bucketName;
+    const s3Region = s3Channel.region;
 
     // 创建 AWS V4 签名客户端
     const aws = new AwsClient({
