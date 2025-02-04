@@ -214,7 +214,8 @@ async function returnWithCheck(request, env, url, imgRecord) {
         return response;
     }
 
-    if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") { } else {
+    if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
+    } else {
         //check the record from kv
         const record = imgRecord;
         if (record.metadata === null) {
@@ -347,7 +348,7 @@ async function returnWhiteListImg(url) {
         })
     } else {
         return new Response(WhiteListImg.body, {
-            status: 200,
+            status: 403,
             headers: {
                 "Content-Type": "image/png",
                 "Content-Disposition": "inline",
