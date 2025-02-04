@@ -1,5 +1,8 @@
 import { errorHandling, telemetryData } from "./utils/middleware";
+import { fetchUploadConfig } from "./utils/sysConfig";
 import { AwsClient } from 'aws4fetch';
+
+let uploadConfig = {};
 
 function UnauthorizedException(reason) {
     return new Response(reason, {
@@ -80,6 +83,9 @@ export async function onRequestPost(context) {  // Contents of context object
         return new Response('Error: Your IP is blocked', { status: 403 });
     }
 
+    // 读取上传配置
+    uploadConfig = await fetchUploadConfig(env);
+
     // 获得上传渠道
     const urlParamUploadChannel = url.searchParams.get('uploadChannel');
     let uploadChannel = 'TelegramNew';
@@ -99,8 +105,10 @@ export async function onRequestPost(context) {  // Contents of context object
     }
     
     // 错误处理和遥测
-    // await errorHandling(context);
-    // telemetryData(context);
+    if (!env.dev_mode === 'true') {
+        await errorHandling(context);
+        telemetryData(context);
+    }
 
     // img_url 未定义或为空的处理逻辑
     if (typeof env.img_url == "undefined" || env.img_url == null || env.img_url == "") {
@@ -378,6 +386,13 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
 
 // 上传到Telegram
 async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fileName, fileType, url, clonedRequest, returnLink) {
+    // 选择一个 Telegram 渠道上传，若负载均衡开启，则随机选择一个；否则选择第一个
+    const tgSettings = uploadConfig.telegram;
+    const tgChannels = tgSettings.channels;
+    const tgChannel = tgSettings.loadBalance.enabled? tgChannels[Math.floor(Math.random() * tgChannels.length)] : tgChannels[0];
+    const tgBotToken = tgChannel.botToken;
+    const tgChatId = tgChannel.chatId;
+
     // 由于TG会把gif后缀的文件转为视频，所以需要修改后缀名绕过限制
     if (fileExt === 'gif') {
         const newFileName = fileName.replace(/\.gif$/, '.jpeg');
@@ -415,13 +430,13 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
 
     // 根据发送接口向表单嵌入chat_id
     let newFormdata = new FormData();
-    newFormdata.append('chat_id', env.TG_CHAT_ID);
+    newFormdata.append('chat_id', tgChatId);
     newFormdata.append(sendFunction.type, formdata.get('file'));
 
     
     // 构建目标 URL 
     // const targetUrl = new URL(url.pathname, 'https://telegra.ph'); // telegraph接口，已失效，缅怀
-    const targetUrl = new URL(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/${sendFunction.url}`); // telegram接口
+    const targetUrl = new URL(`https://api.telegram.org/bot${tgBotToken}/${sendFunction.url}`); // telegram接口
     // 目标 URL 剔除 authCode 参数
     url.searchParams.forEach((value, key) => {
         if (key !== 'authCode') {
@@ -436,6 +451,7 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
     // 向目标 URL 发送请求
     let res = new Response('upload error, check your environment params about telegram channel!', { status: 400 });
     try {
+        console.log('uploading to Telegram...', tgBotToken, tgChatId);
         const response = await fetch(targetUrl.href, {
             method: clonedRequest.method,
             headers: {
@@ -445,7 +461,7 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
         });
         const clonedRes = await response.clone().json(); // 等待响应克隆和解析完成
         const fileInfo = getFile(clonedRes);
-        const filePath = await getFilePath(env, fileInfo.file_id);
+        const filePath = await getFilePath(tgBotToken, fileInfo.file_id);
         const id = fileInfo.file_id;
         // 更新FileSize
         metadata.FileSize = (fileInfo.file_size / 1024 / 1024).toFixed(2);
@@ -463,15 +479,15 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
 
 
         // 图像审查
-        const moderateUrl = `https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${filePath}`;
+        const moderateUrl = `https://api.telegram.org/file/bot${tgBotToken}/${filePath}`;
         metadata = await moderateContent(env, moderateUrl, metadata);
 
         // 更新metadata，写入KV数据库
         try {
             metadata.Channel = "TelegramNew";
             metadata.TgFileId = id;
-            metadata.TgChatId = env.TG_CHAT_ID;
-            metadata.TgBotToken = env.TG_BOT_TOKEN;
+            metadata.TgChatId = tgChatId;
+            metadata.TgBotToken = tgBotToken;
             await env.img_url.put(fullId, "", {
                 metadata: metadata,
             });
@@ -550,9 +566,9 @@ function getFile(response) {
 	}
 }
 
-async function getFilePath(env, file_id) {
+async function getFilePath(bot_token, file_id) {
     try {
-        const url = `https://api.telegram.org/bot${env.TG_BOT_TOKEN}/getFile?file_id=${file_id}`;
+        const url = `https://api.telegram.org/bot${bot_token}/getFile?file_id=${file_id}`;
         const res = await fetch(url, {
           method: 'GET',
           headers: {
