@@ -62,7 +62,7 @@ export async function getUploadConfig(kv, env) {
             fixed: true,
         })
     }
-    for (const tg of settingsKV.telegram.channels || []) {
+    for (const tg of settingsKV.telegram?.channels || []) {
         // 如果savePath是environment variable，将环境变量值填入
         if (tg.savePath === 'environment variable') {
             tg.botToken = env.TG_BOT_TOKEN
@@ -75,7 +75,7 @@ export async function getUploadConfig(kv, env) {
     }
 
     // 负载均衡
-    const tgLoadBalance = settingsKV.telegram.loadBalance || {
+    const tgLoadBalance = settingsKV.telegram?.loadBalance || {
         enabled: false,
         channels: [],
     }
@@ -97,7 +97,7 @@ export async function getUploadConfig(kv, env) {
             fixed: true,
         })
     }
-    for (const r2 of settingsKV.cfr2.channels || []) {
+    for (const r2 of settingsKV.cfr2?.channels || []) {
         // 如果savePath是environment variable，将环境变量值填入
         if (r2.savePath === 'environment variable') {
             continue
@@ -108,7 +108,7 @@ export async function getUploadConfig(kv, env) {
     }
 
     // 负载均衡
-    const r2LoadBalance = settingsKV.cfr2.loadBalance || {
+    const r2LoadBalance = settingsKV.cfr2?.loadBalance || {
         enabled: false,
         channels: [],
     }
@@ -134,7 +134,7 @@ export async function getUploadConfig(kv, env) {
             fixed: true,
         })
     }
-    for (const s of settingsKV.s3.channels || []) {
+    for (const s of settingsKV.s3?.channels || []) {
         // 如果savePath是environment variable，将环境变量值填入
         if (s.savePath === 'environment variable') {
             s.accessKeyId = env.S3_ACCESS_KEY_ID
@@ -150,7 +150,7 @@ export async function getUploadConfig(kv, env) {
     }
 
     // 负载均衡
-    const s3LoadBalance = settingsKV.s3.loadBalance || {
+    const s3LoadBalance = settingsKV.s3?.loadBalance || {
         enabled: false,
         channels: [],
     }
