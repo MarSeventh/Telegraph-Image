@@ -451,7 +451,6 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
     // 向目标 URL 发送请求
     let res = new Response('upload error, check your environment params about telegram channel!', { status: 400 });
     try {
-        console.log('uploading to Telegram...', tgBotToken, tgChatId);
         const response = await fetch(targetUrl.href, {
             method: clonedRequest.method,
             headers: {
