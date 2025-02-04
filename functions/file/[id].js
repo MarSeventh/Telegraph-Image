@@ -150,11 +150,12 @@ export async function onRequest(context) {  // Contents of context object
     // 构建目标 URL
     if (isTgChannel(imgRecord)) {
         // 获取TG图片真实地址
-        const filePath = await getFilePath(env, TgFileID);
+        const TgBotToken = imgRecord.metadata?.TgBotToken || env.TG_BOT_TOKEN;
+        const filePath = await getFilePath(TgBotToken, TgFileID);
         if (filePath === null) {
             return new Response('Error: Failed to fetch image path', { status: 500 });
         }
-        targetUrl = `https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${filePath}`;
+        targetUrl = `https://api.telegram.org/file/bot${TgBotToken}/${filePath}`;
     } else {
         targetUrl = 'https://telegra.ph/' + url.pathname + url.search;
     }
@@ -254,9 +255,9 @@ async function getFileContent(request, max_retries = 2) {
     return null;
 }
 
-async function getFilePath(env, file_id) {
+async function getFilePath(bot_token, file_id) {
     try {
-        const url = `https://api.telegram.org/bot${env.TG_BOT_TOKEN}/getFile?file_id=${file_id}`;
+        const url = `https://api.telegram.org/bot${bot_token}/getFile?file_id=${file_id}`;
         const res = await fetch(url, {
           method: 'GET',
           headers: {

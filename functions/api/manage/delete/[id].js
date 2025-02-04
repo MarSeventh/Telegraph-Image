@@ -29,9 +29,9 @@ export async function onRequest(context) {
       // S3 渠道的图片，删除S3中对应的图片
       if (img.metadata?.Channel === "S3") {
           const aws = new AwsClient({
-              accessKeyId: imgRecord.metadata?.S3AccessKeyId,
-              secretAccessKey: imgRecord.metadata?.S3SecretAccessKey,
-              region: imgRecord.metadata?.S3Region,
+              accessKeyId: img.metadata?.S3AccessKeyId,
+              secretAccessKey: img.metadata?.S3SecretAccessKey,
+              region: img.metadata?.S3Region,
           });
 
           const s3Url = img.metadata?.S3Location;
