@@ -105,7 +105,6 @@ export async function getPageConfig(kv, env) {
                 for (let i = 0; i < config.length; i++) {
                     if (parsedConfig[config[i].id]) {
                         config[i].value = parsedConfig[config[i].id]
-                        config[i].fixed = true
                     }
                 }
             }
