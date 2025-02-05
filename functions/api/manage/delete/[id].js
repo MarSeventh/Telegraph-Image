@@ -1,4 +1,4 @@
-import { AwsClient } from "aws4fetch";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { purgeCFCache } from "../../../utils/purgeCache";
 
 export async function onRequest(context) {
@@ -24,25 +24,32 @@ export async function onRequest(context) {
 
       // 如果是R2渠道的图片，删除R2中对应的图片
       if (img.metadata?.Channel === 'CloudflareR2') {
-        await env.img_r2.delete(params.id);
+          await env.img_r2.delete(params.id);
       }
 
       // S3 渠道的图片，删除S3中对应的图片
       if (img.metadata?.Channel === "S3") {
-          const aws = new AwsClient({
-              accessKeyId: img.metadata?.S3AccessKeyId,
-              secretAccessKey: img.metadata?.S3SecretAccessKey,
-              region: img.metadata?.S3Region,
+          const s3Client = new S3Client({
+              region: img.metadata?.S3Region || "auto", // 默认使用 auto 区域
+              endpoint: img.metadata?.S3Endpoint,
+              credentials: {
+                  accessKeyId: img.metadata?.S3AccessKeyId,
+                  secretAccessKey: img.metadata?.S3SecretAccessKey
+              },
+              forcePathStyle: true
           });
 
-          const s3Url = img.metadata?.S3Location;
+          const bucketName = img.metadata?.S3BucketName;
+          const key = img.metadata?.S3FileKey;
 
           try {
-              const response = await aws.fetch(s3Url, { method: "DELETE" });
+              const command = new DeleteObjectCommand({
+                  Bucket: bucketName,
+                  Key: key,
+              });
 
-              if (!response.ok) {
-                  return new Response(`Error: Failed to delete from S3 - ${response.statusText}`, { status: response.status });
-              }
+              await s3Client.send(command);
+              
           } catch (error) {
               return new Response(`Error: S3 Delete Failed - ${error.message}`, { status: 500 });
           }

@@ -1,7 +1,7 @@
 import { errorHandling, telemetryData } from "./utils/middleware";
 import { fetchUploadConfig, fetchSecurityConfig } from "./utils/sysConfig";
 import { purgeCFCache } from "./utils/purgeCache";
-import { AwsClient } from 'aws4fetch';
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 let uploadConfig = {};
 let securityConfig = {};
@@ -114,7 +114,7 @@ export async function onRequestPost(context) {  // Contents of context object
     }
     
     // 错误处理和遥测
-    if (!env.dev_mode === 'true') {
+    if (env.dev_mode === undefined || env.dev_mode === null || env.dev_mode !== 'true') {
         await errorHandling(context);
         telemetryData(context);
     }
@@ -308,104 +308,92 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
 }
 
 
-// 上传到S3（支持自定义端点）
+
+// 上传到 S3（支持自定义端点）
 async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, originUrl) {
-    // 选择一个 S3 渠道上传，若负载均衡开启，则随机选择一个；否则选择第一个
     const s3Settings = uploadConfig.s3;
     const s3Channels = s3Settings.channels;
-    const s3Channel = s3Settings.loadBalance.enabled? s3Channels[Math.floor(Math.random() * s3Channels.length)] : s3Channels[0];
+    const s3Channel = s3Settings.loadBalance.enabled
+        ? s3Channels[Math.floor(Math.random() * s3Channels.length)]
+        : s3Channels[0];
+
     if (!s3Channel) {
         return new Response('Error: No S3 channel provided', { status: 400 });
     }
 
-    const s3Endpoint = s3Channel.endpoint;
-    const s3AccessKeyId = s3Channel.accessKeyId;
-    const s3SecretAccessKey = s3Channel.secretAccessKey;
-    const s3BucketName = s3Channel.bucketName;
-    const s3Region = s3Channel.region;
+    const { endpoint, accessKeyId, secretAccessKey, bucketName, region } = s3Channel;
 
-    // 创建 AWS V4 签名客户端
-    const aws = new AwsClient({
-        accessKeyId: s3AccessKeyId,
-        secretAccessKey: s3SecretAccessKey,
-        service: "s3",
-        region: s3Region || "auto", // R2 可用 "auto"
+    // 创建 S3 客户端
+    const s3Client = new S3Client({
+        region: region || "auto", // R2 可用 "auto"
+        endpoint, // 自定义 S3 端点
+        credentials: {
+            accessKeyId,
+            secretAccessKey
+        },
+        forcePathStyle: true // 确保使用路径风格（适配 R2、MinIO）
     });
 
     // 获取文件
     const file = formdata.get("file");
     if (!file) return new Response("Error: No file provided", { status: 400 });
 
-    // 转换 `Blob` 为 `Uint8Array`
+    // 转换 Blob 为 Uint8Array
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
 
-    // 确保 `S3_ENDPOINT` 采用路径风格
-    const s3Url = `${s3Endpoint}/${s3BucketName}/${fullId}`;
+    const s3FileName = fullId;
 
     try {
-        // 执行 S3 兼容 `PUT` 上传
-        const response = await aws.fetch(s3Url, {
-            method: "PUT",
-            body: uint8Array, // 需要 Uint8Array 格式
-            headers: {
-                "Content-Type": file.type,
-                "Content-Length": uint8Array.length.toString(), // 确保 Content-Length 计算正确
-            },
-        });
+        // S3 上传参数
+        const putObjectParams = {
+            Bucket: bucketName,
+            Key: s3FileName,
+            Body: uint8Array, // 直接使用 Blob
+            ContentType: file.type
+        };
 
-        // 获取详细错误信息
-        const responseText = await response.text();
-
-        if (!response.ok) {
-            throw new Error(`S3 Upload Failed: ${response.statusText} - ${responseText}`);
-        }
+        // 执行上传
+        await s3Client.send(new PutObjectCommand(putObjectParams));
 
         // 更新 metadata
         metadata.Channel = "S3";
-        metadata.S3Location = s3Url;
-        metadata.S3AccessKeyId = s3AccessKeyId;
-        metadata.S3SecretAccessKey = s3SecretAccessKey;
-        metadata.S3Region = s3Region || "auto";
+        metadata.S3Location = `${endpoint}/${bucketName}/${s3FileName}`;
+        metadata.S3Endpoint = endpoint;
+        metadata.S3AccessKeyId = accessKeyId;
+        metadata.S3SecretAccessKey = secretAccessKey;
+        metadata.S3Region = region || "auto";
+        metadata.S3BucketName = bucketName;
+        metadata.S3FileKey = s3FileName;
 
-        // 图像审查，预写入 KV 数据库
+        // 图像审查
         if (moderateContentApiKey) {
             try {
-                await env.img_url.put(fullId, "", { metadata: metadata });
-            } catch (error) {
+                await env.img_url.put(fullId, "", { metadata });
+            } catch {
                 return new Response("Error: Failed to write to KV database", { status: 500 });
             }
 
             const moderateUrl = `https://${originUrl.hostname}/file/${fullId}`;
             metadata = await moderateContent(env, moderateUrl, metadata);
-
-            // 清除缓存
-            const cdnUrl = `https://${originUrl.hostname}/file/${fullId}`;
-            await purgeCDNCache(env, cdnUrl, originUrl);
+            await purgeCDNCache(env, moderateUrl, originUrl);
         }
 
-        
         // 写入 KV 数据库
         try {
-            await env.img_url.put(fullId, "", { metadata: metadata });
-        } catch (error) {
+            await env.img_url.put(fullId, "", { metadata });
+        } catch {
             return new Response("Error: Failed to write to KV database", { status: 500 });
         }
 
-        // 返回上传成功响应
-        return new Response(
-            JSON.stringify([{ src: returnLink }]),
-            {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-            }
-        );
+        return new Response(JSON.stringify([{ src: returnLink }]), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
     } catch (error) {
         return new Response(`Error: Failed to upload to S3 - ${error.message}`, { status: 500 });
     }
 }
-
-
 
 // 上传到Telegram
 async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fileName, fileType, url, clonedRequest, returnLink) {

@@ -1,4 +1,4 @@
-import { AwsClient } from "aws4fetch";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { fetchSecurityConfig } from "../utils/sysConfig";
 
 let targetUrl = '';
@@ -103,38 +103,50 @@ export async function onRequest(context) {  // Contents of context object
         return newRes;
     }
 
+
     // S3渠道
     if (imgRecord.metadata?.Channel === "S3") {
-        const aws = new AwsClient({
-            accessKeyId: imgRecord.metadata?.S3AccessKeyId,
-            secretAccessKey: imgRecord.metadata?.S3SecretAccessKey,
-            region: imgRecord.metadata?.S3Region,
+        const s3Client = new S3Client({
+            region: imgRecord.metadata?.S3Region || "auto", // 默认使用 auto 区域
+            endpoint: imgRecord.metadata?.S3Endpoint,
+            credentials: {
+                accessKeyId: imgRecord.metadata?.S3AccessKeyId,
+                secretAccessKey: imgRecord.metadata?.S3SecretAccessKey
+            },
+            forcePathStyle: true
         });
 
-        const s3Url = imgRecord.metadata?.S3Location;
+        const bucketName = imgRecord.metadata?.S3BucketName;
+        const key = imgRecord.metadata?.S3FileKey;
 
         try {
-            const response = await aws.fetch(s3Url, { method: "GET" });
+            const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: key
+            });
 
-            if (!response.ok) {
-                return new Response(`Error: S3 Fetch Failed - ${response.statusText}`, { status: response.status });
-            }
 
-            const headers = new Headers(response.headers);
+            const response = await s3Client.send(command);
+
+            // 设置响应头
+            const headers = new Headers();
             headers.set("Content-Disposition", `inline; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
             headers.set("Access-Control-Allow-Origin", "*");
+
             if (fileType) {
                 headers.set("Content-Type", fileType);
             }
 
-            // 根据Referer设置CDN缓存策略，如果是从/或/dashboard等访问，则仅允许浏览器缓存；否则设置为public，缓存时间为7天
+            // 根据Referer设置CDN缓存策略
             if (Referer && Referer.includes(url.origin)) {
                 headers.set('Cache-Control', 'private, max-age=86400');
             } else {
                 headers.set('Cache-Control', 'public, max-age=604800');
             }
 
-            return new Response(response.body, { status: 200, headers });
+            // 返回 S3 文件流
+            return new Response(response.Body, { status: 200, headers });
+
         } catch (error) {
             return new Response(`Error: Failed to fetch from S3 - ${error.message}`, { status: 500 });
         }
