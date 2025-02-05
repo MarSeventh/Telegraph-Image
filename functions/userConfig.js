@@ -7,7 +7,8 @@ export async function onRequestGet(context) {
     const userConfig = {};
     for (const config of userConfigList) {
         if (config.value) {
-            userConfig[config.id] = config.value;
+            // 将config解析为JSON对象
+            userConfig[config.id] = JSON.parse(config.value);
         }
     }
 

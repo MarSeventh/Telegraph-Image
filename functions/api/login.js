@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
     const rightAuthCode = securityConfig.auth.user.authCode;
 
     //验证authCode
-    if (rightAuthCode !== undefined && authCode !== rightAuthCode) {
+    if (rightAuthCode !== undefined && rightAuthCode !== '' && authCode !== rightAuthCode) {
       return new Response('Unauthorized', { status: 401 })
     }
     //返回登录成功
