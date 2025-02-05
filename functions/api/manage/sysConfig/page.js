@@ -26,7 +26,18 @@ export async function onRequest(context) {
     if (request.method === 'POST') {
         const body = await request.json()
         const settings = body
-
+        // 解析为JSON
+        for (let i = 0; i < settings.config.length; i++) {
+            const item = settings.config[i]
+            if (item.value) {
+                try {
+                    settings.config[i].value = JSON.parse(item.value)
+                } catch (error) {
+                    // do nothing
+                }
+            }
+        }
+        console.log(settings)
         // 写入 KV
         await kv.put('manage@sysConfig@page', JSON.stringify(settings))
 
