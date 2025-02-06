@@ -285,7 +285,7 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     metadata.Channel = "CloudflareR2";
     metadata.ChannelName = "R2_env";
 
-    // 图像审查
+    // 图像审查，采用R2的publicUrl
     const R2PublicUrl = r2Channel.publicUrl;
     let moderateUrl = `${R2PublicUrl}/${fullId}`;
     metadata = await moderateContent(env, moderateUrl, metadata);
