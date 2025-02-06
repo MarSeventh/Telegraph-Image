@@ -100,6 +100,7 @@ export async function getUploadConfig(kv, env) {
     for (const r2 of settingsKV.cfr2?.channels || []) {
         // 如果savePath是environment variable，修改可变参数
         if (r2.savePath === 'environment variable') {
+            cfr2Channels[0].publicUrl = r2.publicUrl
             cfr2Channels[0].enabled = r2.enabled
             continue
         }

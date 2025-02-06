@@ -273,6 +273,8 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
     if (!r2Settings.channels || r2Settings.channels.length === 0) {
         return new Response('Error: No R2 channel provided', { status: 400 });
     }
+
+    const r2Channel = r2Settings.channels[0];
     
     const R2DataBase = env.img_r2;
 
@@ -281,9 +283,10 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
 
     // 更新metadata
     metadata.Channel = "CloudflareR2";
+    metadata.ChannelName = "R2_env";
 
     // 图像审查
-    const R2PublicUrl = env.R2PublicUrl;
+    const R2PublicUrl = r2Channel.publicUrl;
     let moderateUrl = `${R2PublicUrl}/${fullId}`;
     metadata = await moderateContent(env, moderateUrl, metadata);
 
@@ -358,6 +361,8 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
 
         // 更新 metadata
         metadata.Channel = "S3";
+        metadata.ChannelName = s3Channel.name;
+
         metadata.S3Location = `${endpoint}/${bucketName}/${s3FileName}`;
         metadata.S3Endpoint = endpoint;
         metadata.S3AccessKeyId = accessKeyId;
@@ -499,6 +504,8 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
         // 更新metadata，写入KV数据库
         try {
             metadata.Channel = "TelegramNew";
+            metadata.ChannelName = tgChannel.name;
+
             metadata.TgFileId = id;
             metadata.TgChatId = tgChatId;
             metadata.TgBotToken = tgBotToken;
