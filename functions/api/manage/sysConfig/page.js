@@ -50,6 +50,7 @@ export async function getPageConfig(kv, env) {
         {
             id: 'siteTitle',
             label: '网站标题',
+            placeholder: 'Sanyue ImgHub',
         },
         {
             id: 'siteIcon',
@@ -58,6 +59,7 @@ export async function getPageConfig(kv, env) {
         {
             id: 'ownerName',
             label: '图床名称',
+            placeholder: 'Sanyue ImgHub',
         },
         {
             id: 'logoUrl',
@@ -66,20 +68,24 @@ export async function getPageConfig(kv, env) {
         {
             id: 'loginBkImg',
             label: '登录页背景图',
+            tooltip: '1.填写 bing 使用必应壁纸轮播 <br/> 2.填写 ["url1","url2"] 使用多张图片轮播 <br/> 3.填写 ["url"] 使用单张图片',
         },
         {
             id: 'uploadBkImg',
             label: '上传页背景图',
+            tooltip: '1.填写 bing 使用必应壁纸轮播 <br/> 2.填写 ["url1","url2"] 使用多张图片轮播 <br/> 3.填写 ["url"] 使用单张图片',
         },
         {
             id: 'bkInterval',
             label: '背景切换间隔',
-            value: "3000"
+            placeholder: '3000',
+            tooltip: '单位：毫秒 ms',
         },
         {
             id: 'bkOpacity',
             label: '背景图透明度',
-            value: "1"
+            placeholder: '1',
+            tooltip: '0-1 之间的小数',
         },
         {
             id: 'footerLink',
@@ -88,10 +94,12 @@ export async function getPageConfig(kv, env) {
         {
             id: 'disableFooter',
             label: '隐藏页脚',
+            placeholder: 'false',
         },
         {
             id: 'urlPrefix',
-            label: '自定义URL前缀',
+            label: '默认URL前缀',
+            tooltip: '自定义URL前缀，如：https://img.a.com/file/，留空则使用当前域名 <br/> 设置后将应用于上传和管理界面',
         }
     )
 
@@ -117,7 +125,7 @@ export async function getPageConfig(kv, env) {
         const item = settingsKV.config[i]
         const index = config.findIndex(x => x.id === item.id)
         if (index !== -1) {
-            config[index] = item
+            config[index].value = item.value
         }
     }
 
