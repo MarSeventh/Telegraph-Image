@@ -65,7 +65,11 @@ export async function getUploadConfig(kv, env) {
     for (const tg of settingsKV.telegram?.channels || []) {
         // 如果savePath是environment variable，修改可变参数
         if (tg.savePath === 'environment variable') {
-            telegramChannels[0].enabled = tg.enabled
+            // 如果环境变量未删除，进行覆盖操作
+            if (telegramChannels[0]) {
+                telegramChannels[0].enabled = tg.enabled
+            }
+
             continue
         }
         // id自增
@@ -100,8 +104,12 @@ export async function getUploadConfig(kv, env) {
     for (const r2 of settingsKV.cfr2?.channels || []) {
         // 如果savePath是environment variable，修改可变参数
         if (r2.savePath === 'environment variable') {
-            cfr2Channels[0].publicUrl = r2.publicUrl
-            cfr2Channels[0].enabled = r2.enabled
+            // 如果环境变量未删除，进行覆盖操作
+            if (cfr2Channels[0]) {
+                cfr2Channels[0].publicUrl = r2.publicUrl
+                cfr2Channels[0].enabled = r2.enabled
+            }
+
             continue
         }
         // id自增
@@ -139,7 +147,11 @@ export async function getUploadConfig(kv, env) {
     for (const s of settingsKV.s3?.channels || []) {
         // 如果savePath是environment variable，修改可变参数
         if (s.savePath === 'environment variable') {
-            s3Channels[0].enabled = s.enabled
+            // 如果环境变量未删除，进行覆盖操作
+            if (s3Channels[0]) {
+                s3Channels[0].enabled = s.enabled
+            }
+            
             continue
         }
         // id自增
