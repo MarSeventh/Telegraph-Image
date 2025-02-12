@@ -18,6 +18,8 @@ export async function onRequestPost(context) {
     const securityConfig = await fetchSecurityConfig(env);
     const rightAuthCode = securityConfig.auth.user.authCode;
 
+    console.log('authCode:', authCode);
+    console.log('rightAuthCode:', rightAuthCode);
     //验证authCode
     if (rightAuthCode !== undefined && rightAuthCode !== '' && authCode !== rightAuthCode) {
       return new Response('Unauthorized', { status: 401 })
