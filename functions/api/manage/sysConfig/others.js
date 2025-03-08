@@ -54,6 +54,7 @@ export async function getOthersConfig(kv, env) {
     // 随机图API
     settings.randomImageAPI = {
         enabled: env.AllowRandom === 'true',
+        allowedDir: '',
         fixed: false,
     }
 
