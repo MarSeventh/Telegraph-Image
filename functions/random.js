@@ -51,7 +51,7 @@ export async function onRequest(context) {
     // 检查是否在允许的目录中，或是允许目录的子目录
     let dirAllowed = false;
     for (let i = 0; i < allowedDirListFormatted.length; i++) {
-        if (allowedDirListFormatted[i] === '' || dir.startsWith(allowedDirListFormatted[i] + '/')) {
+        if (allowedDirListFormatted[i] === '' || dir === allowedDirListFormatted[i] || dir.startsWith(allowedDirListFormatted[i] + '/')) {
             dirAllowed = true;
             break;
         }
