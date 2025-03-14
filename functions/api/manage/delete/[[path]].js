@@ -129,12 +129,8 @@ async function deleteFile(env, fileId, cdnUrl) {
                 headers: { 'Cache-Control': 'max-age=0' },
             });
             
-            const keys = await cache.keys();
-            for (let key of keys) {
-                if (key.url.includes('/api/randomFileList')) {
-                    await cache.put(`${url.origin}/api/randomFileList`, nullResponse);
-                }
-            }
+            const normalizedFolder = fileId.split('/').slice(0, -1).join('/');
+            await cache.put(`${url.origin}/api/randomFileList?dir=${normalizedFolder}`, nullResponse);
         } catch (error) {
             console.error('Failed to clear cache:', error);
         }
