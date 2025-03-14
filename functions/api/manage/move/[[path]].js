@@ -51,7 +51,7 @@ export async function onRequest(context) {
                     const newFileId = `${folderDist}/${fileName}`;
                     const cdnUrl = `https://${url.hostname}/file/${fileId}`;
 
-                    const success = await moveFile(env, fileId, newFileId, cdnUrl);
+                    const success = await moveFile(env, fileId, newFileId, cdnUrl, url);
                     if (success) {
                         processedFiles.push(fileId);
                     } else {
@@ -93,7 +93,7 @@ export async function onRequest(context) {
         const newFileId = dist === '' ? fileKey : `${dist}/${fileKey}`;
         const cdnUrl = `https://${url.hostname}/file/${fileId}`;
 
-        const success = await moveFile(env, fileId, newFileId, cdnUrl);
+        const success = await moveFile(env, fileId, newFileId, cdnUrl, url);
         if (!success) {
             throw new Error('Move file failed');
         }
@@ -112,7 +112,7 @@ export async function onRequest(context) {
 }
 
 // 移动单个文件的核心函数
-async function moveFile(env, fileId, newFileId, cdnUrl) {
+async function moveFile(env, fileId, newFileId, cdnUrl, url) {
     try {
         // 读取图片信息
         const img = await env.img_url.getWithMetadata(fileId);
