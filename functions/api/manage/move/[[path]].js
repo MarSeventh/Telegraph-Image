@@ -144,7 +144,7 @@ async function moveFile(env, fileId, newFileId, cdnUrl) {
                 const s3ServerDomain = img.metadata.S3Endpoint.replace(/https?:\/\//, "");
                 img.metadata.S3Location = `https://${img.metadata.S3BucketName}.${s3ServerDomain}/${newKey}`;
             } else {
-                throw new Error('S3 Move Failed: ' + error);
+                // do nothing
             }
         }
 
