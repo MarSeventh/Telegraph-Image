@@ -172,7 +172,9 @@ async function moveFile(env, fileId, newFileId, cdnUrl) {
             });
             
             const normalizedFolder = fileId.split('/').slice(0, -1).join('/');
+            const normalizedDist = newFileId.split('/').slice(0, -1).join('/');
             await cache.put(`${url.origin}/api/randomFileList?dir=${normalizedFolder}`, nullResponse);
+            await cache.put(`${url.origin}/api/randomFileList?dir=${normalizedDist}`, nullResponse);
         } catch (error) {
             console.error('Failed to clear cache:', error);
         }
