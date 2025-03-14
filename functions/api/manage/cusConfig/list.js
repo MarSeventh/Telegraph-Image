@@ -99,7 +99,7 @@ async function getIPAddress(ip) {
         const addressData = await addressInfo.json();
 
         if (addressInfo.ok && addressData.data) {
-            address = addressData.data.detail + ',' + addressData.data.city + ',' + addressData.data.province + ',' + addressData.data.country;
+            address = addressData.data.detail + ', ' + addressData.data.city + ', ' + addressData.data.province + ', ' + addressData.data.country;
         }
     }
 
