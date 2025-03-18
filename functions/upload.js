@@ -100,7 +100,7 @@ export async function onRequestPost(context) {  // Contents of context object
     // 获得上传渠道
     const urlParamUploadChannel = url.searchParams.get('uploadChannel');
     // 获取上传文件夹路径
-    const uploadFolder = url.searchParams.get('uploadFolder') || '';
+    let uploadFolder = url.searchParams.get('uploadFolder') || '';
 
     let uploadChannel = 'TelegramNew';
     switch (urlParamUploadChannel) {
@@ -154,7 +154,7 @@ export async function onRequestPost(context) {  // Contents of context object
             .replace(/\/{2,}/g, '/') // 替换多个连续的/为单个/
             .replace(/\/$/, '') // 移除末尾的/
         : '';
-        
+
     const metadata = {
         FileName: fileName,
         FileType: fileType,
