@@ -328,7 +328,10 @@ async function uploadFileToCloudflareR2(env, formdata, fullId, metadata, returnL
         JSON.stringify([{ 'src': `${returnLink}` }]), 
         {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*', // 允许跨域访问
+            }
         }
     );
 }
@@ -416,7 +419,10 @@ async function uploadFileToS3(env, formdata, fullId, metadata, returnLink, origi
 
         return new Response(JSON.stringify([{ src: returnLink }]), {
             status: 200,
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*" // 允许跨域访问 
+            },
         });
     } catch (error) {
         return new Response(`Error: Failed to upload to S3 - ${error.message}`, { status: 500 });
@@ -514,7 +520,10 @@ async function uploadFileToTelegram(env, formdata, fullId, metadata, fileExt, fi
                 JSON.stringify([{ 'src': `${returnLink}` }]),
                 {
                     status: 200,
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*', // 允许跨域访问
+                    }
                 }
             );
         }
