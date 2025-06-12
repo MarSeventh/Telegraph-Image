@@ -580,7 +580,10 @@ async function uploadFileToExternal(env, formdata, fullId, metadata, returnLink,
         JSON.stringify([{ 'src': `${returnLink}` }]), 
         {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*', // 允许跨域访问
+            }
         }
     );
 }
